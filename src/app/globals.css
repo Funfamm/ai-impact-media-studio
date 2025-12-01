@@ -1,0 +1,75 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-background: #0a0a0a;
+  --color-foreground: #ededed;
+  --color-surface: #171717;
+  --color-surface-hover: #262626;
+  --color-primary: #3b82f6;
+  --color-primary-gradient-from: #3b82f6;
+  --color-primary-gradient-to: #8b5cf6;
+  --color-accent: #f43f5e;
+  --color-border: #262626;
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: linear-gradient(to bottom, #0f0f0f, #1c1c1c);
+  color: var(--foreground);
+  font-family: var(--font-sans), sans-serif;
+  min-height: 100vh;
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-[var(--color-primary-gradient-from)] to-[var(--color-primary-gradient-to)];
+  }
+
+  .glass {
+    @apply bg-white/5 backdrop-blur-lg border border-white/10;
+  }
+
+  /* Movies Page Typography */
+  .movie-title {
+    font-size: clamp(1rem, 4vw, 1.25rem);
+    line-height: 1.2;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  @media (min-width: 1025px) {
+    .movie-title {
+      font-size: clamp(1.25rem, 2.5vw, 1.75rem);
+      -webkit-line-clamp: 2;
+    }
+  }
+
+  .hero-title {
+    font-size: clamp(2rem, 6vw, 4rem);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.1;
+  }
+
+  /* Hide scrollbar for rails */
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
