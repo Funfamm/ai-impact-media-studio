@@ -33,9 +33,9 @@ export default function RootLayout({
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
       <body className="antialiased">
         <ToastProvider>
-          <Preloader />
-          <CustomCursor />
-          <FilmGrain />
+          {/* <Preloader /> */}
+          {/* <CustomCursor /> */}
+          {/* <FilmGrain /> */}
           <Navbar />
           {children}
           <Footer />
