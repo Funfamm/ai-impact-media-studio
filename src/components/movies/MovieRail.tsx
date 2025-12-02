@@ -14,13 +14,7 @@ function cnSafe(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
 }
 
-interface Movie {
-    id: number;
-    title: string;
-    year: string;
-    genre: string;
-    imageUrl?: string;
-}
+import { Movie } from "@/types/movie";
 
 interface MovieRailProps {
     title: string;
@@ -68,7 +62,7 @@ export function MovieRail({ title, movies }: MovieRailProps) {
                                 title={movie.title}
                                 year={movie.year}
                                 genre={movie.genre}
-                                imageUrl={movie.imageUrl}
+                                imageUrl={movie.posterUrl}
                             />
                         </motion.div>
                     ))}

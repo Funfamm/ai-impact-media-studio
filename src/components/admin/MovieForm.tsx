@@ -1,51 +1,90 @@
 "use client";
 
 import * as React from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
+import { Loader2, Upload, X } from "lucide-react";
+import { storage } from "@/lib/firebase";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { Movie } from "@/types/movie";
-import { X, Save } from "lucide-react";
-import { FileUpload } from "@/components/admin/FileUpload";
 
 interface MovieFormProps {
     initialData?: Movie;
-    onSubmit: (data: Omit<Movie, "id" | "views">) => void;
+    onSubmit: (data: Omit<Movie, "id" | "createdAt">) => Promise<void>;
     onCancel: () => void;
+    isLoading: boolean;
 }
 
-export function MovieForm({ initialData, onSubmit, onCancel }: MovieFormProps) {
-    const [formData, setFormData] = React.useState<Omit<Movie, "id" | "views">>({
-        title: initialData?.title || "",
-        description: initialData?.description || "",
-        genre: initialData?.genre || "",
-        year: initialData?.year || new Date().getFullYear().toString(),
-        duration: initialData?.duration || "",
-        posterUrl: initialData?.posterUrl || "",
-        trailerUrl: initialData?.trailerUrl || "",
-        videoUrl: initialData?.videoUrl || "",
-        publishLocations: initialData?.publishLocations || { home: false, movies: true },
-        status: initialData?.status || "Draft",
-    });
+export function MovieForm({ initialData, onSubmit, onCancel, isLoading }: MovieFormProps) {
+    const [formData, setFormData] = useState<Partial<Movie>>(
+        initialData || {
+            title: "",
+            tagline: "",
+            description: "",
+            year: new Date().getFullYear().toString(),
+            genre: "",
+            duration: "",
+            videoUrl: "",
+            featured: false,
+            sliderDuration: 8000,
+        }
+    );
+    const [posterFile, setPosterFile] = useState<File | null>(null);
+    const [posterPreview, setPosterPreview] = useState<string>(initialData?.posterUrl || "");
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
-    const handleCheckboxChange = (location: "home" | "movies") => {
-        setFormData(prev => ({
-            ...prev,
-            publishLocations: {
-                ...prev.publishLocations,
-                [location]: !prev.publishLocations[location]
-            }
-        }));
+    const handleToggle = (checked: boolean) => {
+        setFormData((prev) => ({ ...prev, featured: checked }));
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            setPosterFile(file);
+            setPosterPreview(URL.createObjectURL(file));
+        }
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        onSubmit(formData);
+
+        try {
+            let posterUrl = formData.posterUrl || "";
+
+            if (posterFile) {
+                const storageRef = ref(storage, `posters/${Date.now()}_${posterFile.name}`);
+                const snapshot = await uploadBytes(storageRef, posterFile);
+                posterUrl = await getDownloadURL(snapshot.ref);
+            }
+
+            if (!posterUrl) {
+                alert("Please upload a poster image.");
+                return;
+            }
+
+            await onSubmit({
+                title: formData.title!,
+                tagline: formData.tagline || "",
+                description: formData.description!,
+                posterUrl,
+                videoUrl: formData.videoUrl || "",
+                year: formData.year!,
+                genre: formData.genre!,
+                duration: formData.duration || "",
+                featured: formData.featured || false,
+                sliderDuration: Number(formData.sliderDuration) || 8000,
+            });
+        } catch (error) {
+            console.error("Error submitting form:", error);
+            alert("Failed to save movie. Check console for details.");
+        }
     };
 
     return (
@@ -59,58 +98,18 @@ export function MovieForm({ initialData, onSubmit, onCancel }: MovieFormProps) {
                         value={formData.title}
                         onChange={handleChange}
                         required
+                        placeholder="e.g. Neon Horizon"
                         className="bg-white/5 border-white/10"
                     />
                 </div>
                 <div className="space-y-2">
-                    <Label htmlFor="genre">Genre</Label>
-                    <select
-                        id="genre"
-                        name="genre"
-                        value={formData.genre}
-                        onChange={handleChange}
-                        required
-                        className="w-full rounded-md bg-[#0a0a0a] border border-white/10 p-2 text-white focus:outline-none focus:ring-2 focus:ring-primary/50"
-                    >
-                        <option value="" disabled>Select a Genre</option>
-                        <option value="Action">Action</option>
-                        <option value="Adventure">Adventure</option>
-                        <option value="Animation">Animation</option>
-                        <option value="Comedy">Comedy</option>
-                        <option value="Crime">Crime</option>
-                        <option value="Documentary">Documentary</option>
-                        <option value="Drama">Drama</option>
-                        <option value="Family">Family</option>
-                        <option value="Fantasy">Fantasy</option>
-                        <option value="Horror">Horror</option>
-                        <option value="Music">Music</option>
-                        <option value="Mystery">Mystery</option>
-                        <option value="Romance">Romance</option>
-                        <option value="Sci-Fi">Sci-Fi</option>
-                        <option value="Thriller">Thriller</option>
-                        <option value="War">War</option>
-                        <option value="Western">Western</option>
-                    </select>
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="year">Year</Label>
+                    <Label htmlFor="tagline">Tagline</Label>
                     <Input
-                        id="year"
-                        name="year"
-                        value={formData.year}
+                        id="tagline"
+                        name="tagline"
+                        value={formData.tagline}
                         onChange={handleChange}
-                        required
-                        className="bg-white/5 border-white/10"
-                    />
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="duration">Duration</Label>
-                    <Input
-                        id="duration"
-                        name="duration"
-                        value={formData.duration}
-                        onChange={handleChange}
-                        placeholder="e.g. 2h 15m"
+                        placeholder="e.g. The future is now."
                         className="bg-white/5 border-white/10"
                     />
                 </div>
@@ -123,93 +122,138 @@ export function MovieForm({ initialData, onSubmit, onCancel }: MovieFormProps) {
                     name="description"
                     value={formData.description}
                     onChange={handleChange}
+                    required
                     rows={4}
-                    className="w-full rounded-md bg-white/5 border border-white/10 p-3 text-white focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    className="flex w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 text-white"
+                    placeholder="Movie synopsis..."
                 />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="space-y-2">
-                    <FileUpload
-                        label="Movie Poster"
-                        accept="image/*"
-                        value={formData.posterUrl}
-                        onChange={(url) => setFormData(prev => ({ ...prev, posterUrl: url }))}
-                    />
-                </div>
-                <div className="space-y-2">
-                    <FileUpload
-                        label="Trailer Video"
-                        accept="video/*"
-                        value={formData.trailerUrl}
-                        onChange={(url) => setFormData(prev => ({ ...prev, trailerUrl: url }))}
-                    />
-                </div>
-                <div className="space-y-2">
-                    <div className="flex items-center justify-between mb-2">
-                        <Label className="text-sm font-medium text-gray-300">Full Movie File</Label>
-                        <span className="text-xs text-yellow-500/80 bg-yellow-500/10 px-2 py-0.5 rounded">
-                            Catalog Only
-                        </span>
-                    </div>
-                    <FileUpload
-                        label="Upload Full Movie"
-                        accept="video/*"
-                        value={formData.videoUrl}
-                        onChange={(url) => setFormData(prev => ({ ...prev, videoUrl: url }))}
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                        This file will only be accessible in the Movie Catalog view.
-                    </p>
-                </div>
-            </div>
-
-            <div className="space-y-4 border-t border-white/10 pt-4">
-                <Label>Publish Settings</Label>
-                <div className="flex gap-6">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                            type="checkbox"
-                            checked={formData.publishLocations.home}
-                            onChange={() => handleCheckboxChange("home")}
-                            className="rounded border-white/20 bg-white/5 text-primary focus:ring-primary"
-                        />
-                        <span className="text-gray-300">Show on Home Page</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                            type="checkbox"
-                            checked={formData.publishLocations.movies}
-                            onChange={() => handleCheckboxChange("movies")}
-                            className="rounded border-white/20 bg-white/5 text-primary focus:ring-primary"
-                        />
-                        <span className="text-gray-300">Show on Movies Page</span>
-                    </label>
-                </div>
-
-                <div className="space-y-2">
-                    <Label htmlFor="status">Status</Label>
-                    <select
-                        id="status"
-                        name="status"
-                        value={formData.status}
+                    <Label htmlFor="year">Year</Label>
+                    <Input
+                        id="year"
+                        name="year"
+                        value={formData.year}
                         onChange={handleChange}
-                        className="w-full rounded-md bg-[#0a0a0a] border border-white/10 p-2 text-white focus:outline-none focus:ring-2 focus:ring-primary/50"
-                    >
-                        <option value="Draft">Draft</option>
-                        <option value="Published">Published</option>
-                        <option value="Scheduled">Scheduled</option>
-                    </select>
+                        required
+                        className="bg-white/5 border-white/10"
+                    />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="genre">Genre</Label>
+                    <Input
+                        id="genre"
+                        name="genre"
+                        value={formData.genre}
+                        onChange={handleChange}
+                        required
+                        placeholder="Sci-Fi"
+                        className="bg-white/5 border-white/10"
+                    />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="duration">Duration</Label>
+                    <Input
+                        id="duration"
+                        name="duration"
+                        value={formData.duration}
+                        onChange={handleChange}
+                        placeholder="2h 15m"
+                        className="bg-white/5 border-white/10"
+                    />
                 </div>
             </div>
 
-            <div className="flex justify-end gap-4 pt-4">
-                <Button type="button" variant="secondary" onClick={onCancel} className="border-white/10 hover:bg-white/5 text-white">
+            <div className="space-y-2">
+                <Label>Poster Image</Label>
+                <div
+                    className="border-2 border-dashed border-white/10 rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer hover:bg-white/5 transition-colors"
+                    onClick={() => fileInputRef.current?.click()}
+                >
+                    {posterPreview ? (
+                        <div className="relative w-full max-w-[200px] aspect-[2/3]">
+                            <img src={posterPreview} alt="Preview" className="w-full h-full object-cover rounded-md" />
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setPosterPreview("");
+                                    setPosterFile(null);
+                                }}
+                                className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1 text-white hover:bg-red-600"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="text-center py-8">
+                            <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                            <p className="text-sm text-gray-400">Click to upload poster</p>
+                        </div>
+                    )}
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleFileChange}
+                    />
+                </div>
+            </div>
+
+            <div className="space-y-2">
+                <Label htmlFor="videoUrl">Trailer URL (Video)</Label>
+                <Input
+                    id="videoUrl"
+                    name="videoUrl"
+                    value={formData.videoUrl}
+                    onChange={handleChange}
+                    placeholder="https://..."
+                    className="bg-white/5 border-white/10"
+                />
+            </div>
+
+            <div className="bg-white/5 p-4 rounded-lg space-y-4 border border-white/10">
+                <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                        <Label className="text-base">Featured in Hero Slider</Label>
+                        <p className="text-sm text-gray-400">Show this movie in the main homepage slider</p>
+                    </div>
+                    {/* Simple Checkbox if Switch doesn't exist, but I'll try to use a checkbox styled as switch or just a checkbox */}
+                    <input
+                        type="checkbox"
+                        checked={formData.featured}
+                        onChange={(e) => handleToggle(e.target.checked)}
+                        className="w-5 h-5 accent-primary"
+                    />
+                </div>
+
+                {formData.featured && (
+                    <div className="space-y-2">
+                        <Label htmlFor="sliderDuration">Slider Duration (ms)</Label>
+                        <Input
+                            id="sliderDuration"
+                            name="sliderDuration"
+                            type="number"
+                            value={formData.sliderDuration}
+                            onChange={handleChange}
+                            placeholder="8000"
+                            className="bg-white/5 border-white/10"
+                        />
+                        <p className="text-xs text-gray-500">How long this slide stays visible (default: 8000ms)</p>
+                    </div>
+                )}
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4">
+                <Button type="button" variant="ghost" onClick={onCancel} disabled={isLoading}>
                     Cancel
                 </Button>
-                <Button type="submit" className="bg-primary hover:bg-primary/90">
-                    <Save className="mr-2 h-4 w-4" />
-                    Save Movie
+                <Button type="submit" disabled={isLoading} className="bg-primary text-white">
+                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {initialData ? "Update Movie" : "Add Movie"}
                 </Button>
             </div>
         </form>

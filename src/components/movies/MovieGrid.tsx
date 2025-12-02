@@ -5,13 +5,7 @@ import { motion } from "framer-motion";
 import { Container } from "@/components/ui/Container";
 import { MovieCard } from "./MovieCard";
 
-interface Movie {
-    id: number;
-    title: string;
-    year: string;
-    genre: string;
-    imageUrl?: string;
-}
+import { Movie } from "@/types/movie";
 
 interface MovieGridProps {
     title: string;
@@ -53,7 +47,7 @@ export function MovieGrid({ title, movies }: MovieGridProps) {
                                 title={movie.title}
                                 year={movie.year}
                                 genre={movie.genre}
-                                imageUrl={movie.imageUrl}
+                                imageUrl={movie.posterUrl}
                                 className="w-full"
                             />
                         </motion.div>

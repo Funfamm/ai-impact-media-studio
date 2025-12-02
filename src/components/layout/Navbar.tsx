@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Home } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 import { useToast } from "@/components/ui/Toast";
@@ -49,26 +49,33 @@ export function Navbar() {
                         <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-[0_0_15px_rgba(59,130,246,0.5)]">
                             <span className="text-white font-bold">AI</span>
                         </div>
-                        <span className="hidden sm:inline-block font-bold bg-clip-text text-transparent bg-gradient-to-r from-white via-purple-200 to-white animate-pulse group-hover:animate-none group-hover:text-white transition-colors">Impact Studio</span>
+                        <span className="font-bold bg-clip-text text-transparent bg-gradient-to-r from-white via-purple-200 to-white animate-pulse group-hover:animate-none group-hover:text-white transition-colors">Impact Studio</span>
                     </Link>
 
                     {/* Desktop Nav */}
                     <div className="hidden md:flex items-center gap-8">
-                        {navLinks.map((link) => (
-                            <Link
-                                key={link.name}
-                                href={link.href}
-                                className={cnSafe(
-                                    "text-sm font-medium transition-colors relative group",
-                                    pathname === link.href ? "text-white" : "text-gray-400 hover:text-white"
-                                )}
-                            >
-                                {link.name}
-                                <span className={cnSafe(
-                                    "absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full",
-                                    pathname === link.href ? "w-full" : ""
-                                )} />
+                        {pathname !== "/" && (
+                            <Link href="/" className="text-gray-400 hover:text-white transition-colors">
+                                <Home className="w-5 h-5" />
                             </Link>
+                        )}
+                        {navLinks.map((link) => (
+                            link.href !== "/" && ( // Filter out Home text link if we have the icon, or keep both? User said "add homepage icon". I'll keep the text link in the map but maybe filter it out if I add the icon? "add homepage icon to all pages except the homepage".
+                                <Link
+                                    key={link.name}
+                                    href={link.href}
+                                    className={cnSafe(
+                                        "text-sm font-medium transition-colors relative group",
+                                        pathname === link.href ? "text-white" : "text-gray-400 hover:text-white"
+                                    )}
+                                >
+                                    {link.name}
+                                    <span className={cnSafe(
+                                        "absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full",
+                                        pathname === link.href ? "w-full" : ""
+                                    )} />
+                                </Link>
+                            )
                         ))}
                         <Magnetic>
                             <Link href="/donation">

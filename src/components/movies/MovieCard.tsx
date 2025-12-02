@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { Play } from "lucide-react";
+import NextImage from "next/image";
 
 // Inline cn for safety if utils not found (though it should be)
 import { clsx, type ClassValue } from "clsx";
@@ -37,11 +38,12 @@ export function MovieCard({ title, imageUrl, year, genre, className }: MovieCard
                 {/* Thumbnail Container */}
                 <div className="relative overflow-hidden rounded-lg bg-surface-hover aspect-[1/1.4] min-w-[100px] min-h-[140px]">
                     {imageUrl ? (
-                        <img
+                        <NextImage
                             src={imageUrl}
                             alt={title}
-                            loading="lazy"
-                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                            fill
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                            className="object-cover transition-transform duration-300 group-hover:scale-105"
                         />
                     ) : (
                         <div className="h-full w-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">

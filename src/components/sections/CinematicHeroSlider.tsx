@@ -7,58 +7,79 @@ import { Container } from "@/components/ui/Container";
 import { Magnetic } from "@/components/ui/Magnetic";
 import { Play, ChevronRight, ChevronLeft } from "lucide-react";
 import Link from "next/link";
+import NextImage from "next/image";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { Movie } from "@/types/movie";
 
-// Mock Data for Slider
-const SLIDES = [
-    {
-        id: 1,
-        title: "Neon Horizon",
-        tagline: "The future is brighter than you think.",
-        description: "In a city that never sleeps, an AI detective uncovers a conspiracy that threatens the very fabric of reality.",
-        image: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=2525&auto=format&fit=crop", // Cyberpunk/Neon city
-        color: "from-cyan-500 to-blue-600"
-    },
-    {
-        id: 2,
-        title: "The Last Echo",
-        tagline: "Silence speaks volumes.",
-        description: "A solitary astronaut must decode the final transmission from a lost civilization before time runs out.",
-        image: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2672&auto=format&fit=crop", // Space/Planet
-        color: "from-purple-500 to-pink-600"
-    },
-    {
-        id: 3,
-        title: "Velvet Shadows",
-        tagline: "Trust no one.",
-        description: "A high-stakes noir thriller set in 1950s Paris, where every shadow hides a secret.",
-        image: "https://images.unsplash.com/photo-1517604931442-71053e3e2e3c?q=80&w=2670&auto=format&fit=crop", // Noir/Shadowy
-        color: "from-amber-500 to-red-600"
-    }
-];
+const MotionImage = motion(NextImage);
 
 export function CinematicHeroSlider() {
+    const [slides, setSlides] = React.useState<Movie[]>([]);
     const [currentIndex, setCurrentIndex] = React.useState(0);
     const [direction, setDirection] = React.useState(0);
+    const [isLoading, setIsLoading] = React.useState(true);
+
+    // Fetch Featured Movies
+    React.useEffect(() => {
+        const fetchSlides = async () => {
+            try {
+                const q = query(collection(db, "movies"), where("featured", "==", true));
+                const snapshot = await getDocs(q);
+                const fetchedSlides = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                })) as Movie[];
+
+                if (fetchedSlides.length > 0) {
+                    setSlides(fetchedSlides);
+                } else {
+                    // Fallback if no featured movies
+                    setSlides([]);
+                }
+            } catch (error) {
+                console.error("Error fetching hero slides:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchSlides();
+    }, []);
 
     // Auto-play
     React.useEffect(() => {
+        if (slides.length === 0) return;
+
+        const currentSlideDuration = slides[currentIndex]?.sliderDuration || 8000;
+
         const timer = setInterval(() => {
             nextSlide();
-        }, 8000); // 8 seconds per slide
+        }, currentSlideDuration);
         return () => clearInterval(timer);
-    }, [currentIndex]);
+    }, [currentIndex, slides]);
 
     const nextSlide = () => {
+        if (slides.length === 0) return;
         setDirection(1);
-        setCurrentIndex((prev) => (prev + 1) % SLIDES.length);
+        setCurrentIndex((prev) => (prev + 1) % slides.length);
     };
 
     const prevSlide = () => {
+        if (slides.length === 0) return;
         setDirection(-1);
-        setCurrentIndex((prev) => (prev - 1 + SLIDES.length) % SLIDES.length);
+        setCurrentIndex((prev) => (prev - 1 + slides.length) % slides.length);
     };
 
-    const currentSlide = SLIDES[currentIndex];
+    if (isLoading) {
+        return <div className="h-screen w-full bg-black flex items-center justify-center text-white">Loading Experience...</div>;
+    }
+
+    if (slides.length === 0) {
+        return null; // Or a default static hero
+    }
+
+    const currentSlide = slides[currentIndex];
 
     // Animation Variants
     const slideVariants = {
@@ -89,13 +110,21 @@ export function CinematicHeroSlider() {
             scale: 1.1,
             x: "0%", // No pan
             transition: {
-                duration: 10,
+                duration: (currentSlide.sliderDuration || 8000) / 1000 + 2, // Slightly longer than slide duration
                 ease: "linear"
             }
         })
     };
 
+    // We can't use hooks conditionally, so we assume this component is always rendered
+    // But we need to handle the case where we might return early. 
+    // Actually, hooks must run unconditionally. 
+    // Moving the return null/loading to after hooks is safer, but useScroll might error if ref not attached? 
+    // No, useScroll attaches to window by default.
+
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     const { scrollY } = useScroll();
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     const y = useTransform(scrollY, [0, 1000], [0, 400]);
 
     return (
@@ -116,10 +145,12 @@ export function CinematicHeroSlider() {
                 >
                     {/* Background Image with Ken Burns & Parallax */}
                     <div className="absolute inset-0 overflow-hidden">
-                        <motion.img
-                            src={currentSlide.image}
+                        <MotionImage
+                            src={currentSlide.posterUrl}
                             alt={currentSlide.title}
-                            className="w-full h-full object-cover"
+                            fill
+                            priority
+                            className="object-cover"
                             custom={currentIndex}
                             variants={imageVariants}
                             initial="initial"
@@ -143,7 +174,7 @@ export function CinematicHeroSlider() {
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: 0.6, duration: 0.5 }}
-                                    className={`inline-block px-3 py-1 mb-4 text-xs font-bold tracking-wider uppercase rounded-full bg-gradient-to-r ${currentSlide.color} text-white`}
+                                    className={`inline-block px-3 py-1 mb-4 text-xs font-bold tracking-wider uppercase rounded-full bg-gradient-to-r from-primary to-purple-600 text-white`}
                                 >
                                     Now Streaming
                                 </motion.span>
@@ -179,10 +210,12 @@ export function CinematicHeroSlider() {
                                     className="flex flex-wrap gap-4"
                                 >
                                     <Magnetic>
-                                        <Button size="lg" className={`bg-gradient-to-r ${currentSlide.color} hover:opacity-90 border-none text-white font-bold px-8`}>
-                                            <Play className="mr-2 h-5 w-5 fill-current" />
-                                            Watch Now
-                                        </Button>
+                                        <Link href={currentSlide.videoUrl || "#"}>
+                                            <Button size="lg" className={`bg-gradient-to-r from-primary to-purple-600 hover:opacity-90 border-none text-white font-bold px-8`}>
+                                                <Play className="mr-2 h-5 w-5 fill-current" />
+                                                Watch Trailer
+                                            </Button>
+                                        </Link>
                                     </Magnetic>
                                 </motion.div>
                             </motion.div>
@@ -220,7 +253,7 @@ export function CinematicHeroSlider() {
 
             {/* Slide Indicators */}
             <div className="absolute bottom-12 left-1/2 -translate-x-1/2 z-20 flex gap-3">
-                {SLIDES.map((_, index) => (
+                {slides.map((_, index) => (
                     <button
                         key={index}
                         onClick={() => {

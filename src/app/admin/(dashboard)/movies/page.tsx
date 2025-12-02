@@ -1,194 +1,199 @@
 "use client";
 
 import * as React from "react";
-import { Card } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
-import { Plus, Edit, Trash2, MoreVertical, X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, query, orderBy } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import { Movie } from "@/types/movie";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Input } from "@/components/ui/Input";
+import { Plus, Search, Edit2, Trash2, Film, Star, X } from "lucide-react";
 import { MovieForm } from "@/components/admin/MovieForm";
-import { motion, AnimatePresence } from "framer-motion";
-
-// Mock Data
-const initialMovies: Movie[] = [
-    {
-        id: "1",
-        title: "Neon Horizon",
-        description: "A futuristic sci-fi thriller.",
-        genre: "Sci-Fi",
-        year: "2025",
-        duration: "2h 10m",
-        posterUrl: "",
-        trailerUrl: "",
-        publishLocations: { home: true, movies: true },
-        status: "Published",
-        views: "1.2M"
-    },
-    {
-        id: "2",
-        title: "The Last Echo",
-        description: "A gripping mystery.",
-        genre: "Thriller",
-        year: "2024",
-        duration: "1h 55m",
-        posterUrl: "",
-        trailerUrl: "",
-        publishLocations: { home: false, movies: true },
-        status: "Published",
-        views: "850K"
-    }
-];
+import { useToast } from "@/components/ui/Toast";
+import { AnimatePresence, motion } from "framer-motion";
 
 export default function AdminMoviesPage() {
-    const [movies, setMovies] = React.useState<Movie[]>(initialMovies);
-    const [isFormOpen, setIsFormOpen] = React.useState(false);
-    const [editingMovie, setEditingMovie] = React.useState<Movie | undefined>(undefined);
+    const [movies, setMovies] = useState<Movie[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingMovie, setEditingMovie] = useState<Movie | undefined>(undefined);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const { showToast } = useToast();
 
-    const handleAddMovie = (data: Omit<Movie, "id" | "views">) => {
-        const newMovie: Movie = {
-            ...data,
-            id: Math.random().toString(36).substr(2, 9),
-            views: "0"
-        };
-        setMovies([...movies, newMovie]);
-        setIsFormOpen(false);
-    };
+    // Real-time listener
+    useEffect(() => {
+        const q = query(collection(db, "movies"), orderBy("createdAt", "desc"));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const moviesData = snapshot.docs.map((doc) => ({
+                id: doc.id,
+                ...doc.data(),
+            })) as Movie[];
+            setMovies(moviesData);
+            setIsLoading(false);
+        }, (error) => {
+            console.error("Error fetching movies:", error);
+            showToast("Failed to load movies", "error");
+            setIsLoading(false);
+        });
 
-    const handleEditMovie = (data: Omit<Movie, "id" | "views">) => {
-        if (!editingMovie) return;
-        setMovies(movies.map(m => m.id === editingMovie.id ? { ...m, ...data } : m));
-        setIsFormOpen(false);
+        return () => unsubscribe();
+    }, []);
+
+    const filteredMovies = movies.filter(movie =>
+        movie.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        movie.genre.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    const handleAddMovie = () => {
         setEditingMovie(undefined);
+        setIsModalOpen(true);
     };
 
-    const handleDeleteMovie = (id: string) => {
-        if (confirm("Are you sure you want to delete this movie?")) {
-            setMovies(movies.filter(m => m.id !== id));
+    const handleEditMovie = (movie: Movie) => {
+        setEditingMovie(movie);
+        setIsModalOpen(true);
+    };
+
+    const handleDeleteMovie = async (id: string) => {
+        if (!confirm("Are you sure you want to delete this movie? This cannot be undone.")) return;
+
+        try {
+            await deleteDoc(doc(db, "movies", id));
+            showToast("Movie deleted successfully", "success");
+        } catch (error) {
+            console.error("Error deleting movie:", error);
+            showToast("Failed to delete movie", "error");
         }
     };
 
-    const openEditForm = (movie: Movie) => {
-        setEditingMovie(movie);
-        setIsFormOpen(true);
-    };
-
-    const openAddForm = () => {
-        setEditingMovie(undefined);
-        setIsFormOpen(true);
+    const handleSubmit = async (data: Omit<Movie, "id" | "createdAt">) => {
+        setIsSubmitting(true);
+        try {
+            if (editingMovie?.id) {
+                // Update
+                await updateDoc(doc(db, "movies", editingMovie.id), {
+                    ...data
+                });
+                showToast("Movie updated successfully", "success");
+            } else {
+                // Create
+                await addDoc(collection(db, "movies"), {
+                    ...data,
+                    createdAt: new Date().toISOString(),
+                });
+                showToast("Movie added successfully", "success");
+            }
+            setIsModalOpen(false);
+        } catch (error) {
+            console.error("Error saving movie:", error);
+            showToast("Failed to save movie", "error");
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
-        <div className="space-y-8 relative">
-            <div className="flex items-center justify-between">
+        <div className="space-y-8">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-3xl font-bold text-white mb-2">Movie Management</h2>
-                    <p className="text-gray-400">Manage your film library and releases.</p>
+                    <h1 className="text-3xl font-bold text-white mb-2">Movies & Trailers</h1>
+                    <p className="text-gray-400">Manage your film library, trailers, and featured content.</p>
                 </div>
-                <Button
-                    onClick={openAddForm}
-                    className="bg-gradient-to-r from-primary to-purple-600 border-none"
-                >
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add New Movie
+                <Button onClick={handleAddMovie} className="bg-primary text-white gap-2">
+                    <Plus className="h-4 w-4" /> Add Movie
                 </Button>
             </div>
 
-            {/* Movie List */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {movies.map((movie) => (
-                    <Card key={movie.id} className="group relative overflow-hidden border-white/10 bg-black/40 backdrop-blur-sm hover:border-primary/50 transition-colors">
-                        {/* Movie Poster Placeholder */}
-                        <div className="h-48 bg-white/5 relative">
-                            {movie.posterUrl ? (
+            <Card className="p-4 bg-black/40 border-white/10 backdrop-blur-xl">
+                <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                        placeholder="Search movies by title or genre..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-10 bg-white/5 border-white/10 text-white"
+                    />
+                </div>
+            </Card>
+
+            {isLoading ? (
+                <div className="text-center py-20 text-gray-500">Loading library...</div>
+            ) : filteredMovies.length === 0 ? (
+                <div className="text-center py-20 text-gray-500">
+                    <Film className="h-12 w-12 mx-auto mb-4 opacity-20" />
+                    <p>No movies found. Add your first one!</p>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredMovies.map((movie) => (
+                        <motion.div
+                            key={movie.id}
+                            layout
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className="group relative bg-zinc-900/50 border border-white/5 rounded-xl overflow-hidden hover:border-primary/50 transition-colors"
+                        >
+                            <div className="aspect-video relative overflow-hidden">
                                 <img
                                     src={movie.posterUrl}
                                     alt={movie.title}
-                                    className="w-full h-full object-cover"
+                                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                                 />
-                            ) : (
-                                <div className="absolute inset-0 flex items-center justify-center text-gray-600">
-                                    <span className="text-4xl font-bold opacity-20">POSTER</span>
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+                                {movie.featured && (
+                                    <div className="absolute top-2 right-2 bg-yellow-500/20 text-yellow-400 text-xs px-2 py-1 rounded-full border border-yellow-500/50 flex items-center gap-1 backdrop-blur-md">
+                                        <Star className="h-3 w-3 fill-current" /> Featured
+                                    </div>
+                                )}
+                                <div className="absolute bottom-4 left-4 right-4">
+                                    <h3 className="text-lg font-bold text-white truncate">{movie.title}</h3>
+                                    <p className="text-sm text-gray-400 truncate">{movie.tagline}</p>
                                 </div>
-                            )}
-                            <div className="absolute top-4 right-4 flex gap-2">
-                                <span className={`px-2 py-1 rounded text-xs font-medium
-                                    ${movie.status === 'Published' ? 'bg-green-500/20 text-green-400' :
-                                        movie.status === 'Draft' ? 'bg-gray-500/20 text-gray-400' :
-                                            'bg-blue-500/20 text-blue-400'}`}>
-                                    {movie.status}
-                                </span>
                             </div>
-                            <div className="absolute bottom-4 left-4 flex gap-2">
-                                {movie.publishLocations.home && (
-                                    <span className="px-2 py-1 rounded text-xs font-medium bg-purple-500/20 text-purple-400">
-                                        Home
-                                    </span>
-                                )}
-                                {movie.publishLocations.movies && (
-                                    <span className="px-2 py-1 rounded text-xs font-medium bg-blue-500/20 text-blue-400">
-                                        Movies
-                                    </span>
-                                )}
-                            </div>
-                        </div>
-
-                        <div className="p-6">
-                            <h3 className="text-xl font-bold text-white mb-1">{movie.title}</h3>
-                            <div className="flex items-center gap-2 text-sm text-gray-400 mb-4">
-                                <span>{movie.year}</span>
-                                <span>•</span>
-                                <span>{movie.genre}</span>
-                            </div>
-
-                            <div className="flex items-center justify-between pt-4 border-t border-white/10">
-                                <div className="text-sm text-gray-500">
-                                    {movie.views} views
+                            <div className="p-4 flex items-center justify-between">
+                                <div className="text-xs text-gray-500">
+                                    {movie.year} • {movie.genre} • {movie.duration || "N/A"}
                                 </div>
                                 <div className="flex gap-2">
-                                    <button
-                                        onClick={() => openEditForm(movie)}
-                                        className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
-                                    >
-                                        <Edit className="h-4 w-4" />
-                                    </button>
-                                    <button
-                                        onClick={() => handleDeleteMovie(movie.id)}
-                                        className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
-                                    >
+                                    <Button size="sm" variant="ghost" onClick={() => handleEditMovie(movie)}>
+                                        <Edit2 className="h-4 w-4" />
+                                    </Button>
+                                    <Button size="sm" variant="ghost" className="text-red-400 hover:text-red-300" onClick={() => handleDeleteMovie(movie.id!)}>
                                         <Trash2 className="h-4 w-4" />
-                                    </button>
+                                    </Button>
                                 </div>
                             </div>
-                        </div>
-                    </Card>
-                ))}
-            </div>
+                        </motion.div>
+                    ))}
+                </div>
+            )}
 
-            {/* Modal Form */}
+            {/* Modal Overlay */}
             <AnimatePresence>
-                {isFormOpen && (
+                {isModalOpen && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
                         <motion.div
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.95 }}
-                            className="w-full max-w-2xl bg-[#0a0a0a] border border-white/10 rounded-xl shadow-2xl overflow-hidden"
+                            className="w-full max-w-2xl bg-zinc-900 border border-white/10 rounded-xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
                         >
-                            <div className="flex items-center justify-between p-6 border-b border-white/10">
+                            <div className="p-6 border-b border-white/10 flex items-center justify-between">
                                 <h2 className="text-xl font-bold text-white">
                                     {editingMovie ? "Edit Movie" : "Add New Movie"}
                                 </h2>
-                                <button
-                                    onClick={() => setIsFormOpen(false)}
-                                    className="text-gray-400 hover:text-white"
-                                >
+                                <Button variant="ghost" size="sm" onClick={() => setIsModalOpen(false)}>
                                     <X className="h-5 w-5" />
-                                </button>
+                                </Button>
                             </div>
-                            <div className="p-6 max-h-[80vh] overflow-y-auto">
+                            <div className="p-6 overflow-y-auto">
                                 <MovieForm
                                     initialData={editingMovie}
-                                    onSubmit={editingMovie ? handleEditMovie : handleAddMovie}
-                                    onCancel={() => setIsFormOpen(false)}
+                                    onSubmit={handleSubmit}
+                                    onCancel={() => setIsModalOpen(false)}
+                                    isLoading={isSubmitting}
                                 />
                             </div>
                         </motion.div>
