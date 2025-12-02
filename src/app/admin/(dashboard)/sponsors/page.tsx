@@ -9,51 +9,12 @@ import { Plus, Edit, Trash2, X, Save, ExternalLink, Check, Eye, Mail, User, Down
 import { motion, AnimatePresence } from "framer-motion";
 import { FileUpload } from "@/components/admin/FileUpload";
 import { Sponsor } from "@/types/sponsor";
-
-// Mock Data
-const initialSponsors: Sponsor[] = [
-    {
-        id: "1",
-        name: "TechCorp Global",
-        logoUrl: "",
-        websiteUrl: "https://example.com",
-        partnershipInterest: "Event Sponsorship",
-        status: "Active",
-        dateJoined: "2024-01-15",
-        contactName: "Alice Johnson",
-        email: "alice@techcorp.com",
-        message: "We are excited to partner with AI Impact Media to drive innovation in storytelling.",
-        proposalDocument: "https://example.com/proposal.pdf"
-    },
-    {
-        id: "2",
-        name: "Creative Arts Foundation",
-        logoUrl: "",
-        websiteUrl: "https://example.org",
-        partnershipInterest: "Grant Funding",
-        status: "Active",
-        dateJoined: "2024-03-10",
-        contactName: "Bob Smith",
-        email: "bob@creativearts.org",
-        message: "Supporting the next generation of creators is our mission.",
-        proposalDocument: "https://example.com/grant-details.pdf"
-    },
-    {
-        id: "3",
-        name: "Future Vision Inc.",
-        logoUrl: "",
-        websiteUrl: "https://futurevision.io",
-        partnershipInterest: "Product Placement",
-        status: "Pending",
-        dateJoined: "2024-12-01",
-        contactName: "Charlie Davis",
-        email: "charlie@futurevision.io",
-        message: "Proposal: We would like to sponsor the 'AI in Cinema' documentary series. Looking forward to discussing details."
-    }
-];
+import { db } from "@/lib/firebase";
+import { collection, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc, addDoc, serverTimestamp } from "firebase/firestore";
 
 export default function SponsorsPage() {
-    const [sponsors, setSponsors] = React.useState<Sponsor[]>(initialSponsors);
+    const [sponsors, setSponsors] = React.useState<Sponsor[]>([]);
+    const [error, setError] = React.useState<string | null>(null);
     const [selectedSponsor, setSelectedSponsor] = React.useState<Sponsor | null>(null);
     const [isFormOpen, setIsFormOpen] = React.useState(false);
     const [editingSponsor, setEditingSponsor] = React.useState<Sponsor | undefined>(undefined);
@@ -68,6 +29,39 @@ export default function SponsorsPage() {
         message: "",
         proposalDocument: ""
     });
+
+    // Real-time listener for sponsors
+    React.useEffect(() => {
+        try {
+            const q = query(collection(db, "sponsors"), orderBy("createdAt", "desc"));
+            const unsubscribe = onSnapshot(q, (snapshot) => {
+                const sponsorsData = snapshot.docs.map(doc => {
+                    const data = doc.data();
+                    return {
+                        id: doc.id,
+                        name: data.companyName || data.name || "Unknown Company",
+                        logoUrl: data.logoUrl || "",
+                        websiteUrl: data.websiteUrl || "",
+                        partnershipInterest: data.partnershipType || data.partnershipInterest || "Other",
+                        status: (data.status ? data.status.charAt(0).toUpperCase() + data.status.slice(1) : "Pending") as 'Active' | 'Pending' | 'Inactive',
+                        contactName: data.contactName || "",
+                        email: data.email || "",
+                        message: data.message || "",
+                        proposalDocument: data.proposalDocument || "",
+                        dateJoined: data.createdAt?.toDate ? data.createdAt.toDate().toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
+                    };
+                }) as Sponsor[];
+                setSponsors(sponsorsData);
+            }, (err) => {
+                console.error("Firestore Error:", err);
+                setError(`Error loading sponsors: ${err.message}`);
+            });
+            return () => unsubscribe();
+        } catch (err: any) {
+            console.error("Setup Error:", err);
+            setError(`Error setting up listener: ${err.message}`);
+        }
+    }, []);
 
     const resetForm = () => {
         setFormData({
@@ -84,40 +78,54 @@ export default function SponsorsPage() {
         setEditingSponsor(undefined);
     };
 
-    const handleAddSponsor = () => {
-        const newSponsor: Sponsor = {
-            ...formData,
-            id: Math.random().toString(36).substr(2, 9),
-            dateJoined: new Date().toISOString().split('T')[0]
-        };
-        setSponsors([...sponsors, newSponsor]);
-        setIsFormOpen(false);
-        resetForm();
+    const handleAddSponsor = async () => {
+        try {
+            await addDoc(collection(db, "sponsors"), {
+                ...formData,
+                createdAt: serverTimestamp()
+            });
+            setIsFormOpen(false);
+            resetForm();
+        } catch (error) {
+            console.error("Error adding sponsor:", error);
+        }
     };
 
-    const handleEditSponsor = () => {
+    const handleEditSponsor = async () => {
         if (!editingSponsor) return;
-        setSponsors(sponsors.map(s => s.id === editingSponsor.id ? { ...s, ...formData } : s));
-        setIsFormOpen(false);
-        resetForm();
-        if (selectedSponsor?.id === editingSponsor.id) {
-            setSelectedSponsor({ ...editingSponsor, ...formData });
+        try {
+            const sponsorRef = doc(db, "sponsors", editingSponsor.id);
+            await updateDoc(sponsorRef, { ...formData });
+            setIsFormOpen(false);
+            resetForm();
+            if (selectedSponsor?.id === editingSponsor.id) {
+                setSelectedSponsor({ ...editingSponsor, ...formData });
+            }
+        } catch (error) {
+            console.error("Error updating sponsor:", error);
         }
     };
 
-    const handleDeleteSponsor = (id: string) => {
+    const handleDeleteSponsor = async (id: string) => {
         if (confirm("Are you sure you want to delete this sponsor?")) {
-            setSponsors(sponsors.filter(s => s.id !== id));
-            if (selectedSponsor?.id === id) setSelectedSponsor(null);
+            try {
+                await deleteDoc(doc(db, "sponsors", id));
+                if (selectedSponsor?.id === id) setSelectedSponsor(null);
+            } catch (error) {
+                console.error("Error deleting sponsor:", error);
+            }
         }
     };
 
-    const handleStatusUpdate = (id: string, newStatus: 'Active' | 'Pending' | 'Inactive') => {
-        setSponsors(prev => prev.map(s =>
-            s.id === id ? { ...s, status: newStatus } : s
-        ));
-        if (selectedSponsor?.id === id) {
-            setSelectedSponsor(prev => prev ? { ...prev, status: newStatus } : null);
+    const handleStatusUpdate = async (id: string, newStatus: 'Active' | 'Pending' | 'Inactive') => {
+        try {
+            const sponsorRef = doc(db, "sponsors", id);
+            await updateDoc(sponsorRef, { status: newStatus });
+            if (selectedSponsor?.id === id) {
+                setSelectedSponsor(prev => prev ? { ...prev, status: newStatus } : null);
+            }
+        } catch (error) {
+            console.error("Error updating status:", error);
         }
     };
 
@@ -147,12 +155,35 @@ export default function SponsorsPage() {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
+    const [deleteId, setDeleteId] = React.useState<string | null>(null);
+
+    const handleDeleteClick = (id: string) => {
+        setDeleteId(id);
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteId) return;
+        try {
+            await deleteDoc(doc(db, "sponsors", deleteId));
+            if (selectedSponsor?.id === deleteId) setSelectedSponsor(null);
+            setDeleteId(null);
+        } catch (error) {
+            console.error("Error deleting sponsor:", error);
+        }
+    };
+
     return (
         <div className="space-y-8 relative">
+            {/* ... existing header ... */}
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-3xl font-bold text-white mb-2">Sponsor Management</h2>
                     <p className="text-gray-400">Review proposals and manage partnerships.</p>
+                    {error && (
+                        <div className="mt-2 p-2 bg-red-500/20 border border-red-500/50 rounded text-red-200 text-sm">
+                            {error}
+                        </div>
+                    )}
                 </div>
                 <Button
                     onClick={openAddForm}
@@ -215,7 +246,7 @@ export default function SponsorsPage() {
                                                         <Edit className="h-4 w-4" />
                                                     </button>
                                                     <button
-                                                        onClick={(e) => { e.stopPropagation(); handleDeleteSponsor(sponsor.id); }}
+                                                        onClick={(e) => { e.stopPropagation(); handleDeleteClick(sponsor.id); }}
                                                         className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
                                                     >
                                                         <Trash2 className="h-4 w-4" />
@@ -346,6 +377,33 @@ export default function SponsorsPage() {
                     </AnimatePresence>
                 </div>
             </div>
+
+            {/* Delete Confirmation Modal */}
+            <AnimatePresence>
+                {deleteId && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="w-full max-w-md bg-[#0a0a0a] border border-red-500/30 rounded-xl shadow-2xl overflow-hidden"
+                        >
+                            <div className="p-6">
+                                <h2 className="text-xl font-bold text-white mb-2">Confirm Deletion</h2>
+                                <p className="text-gray-400 mb-6">Are you sure you want to delete this sponsor? This action cannot be undone.</p>
+                                <div className="flex justify-end gap-3">
+                                    <Button variant="secondary" onClick={() => setDeleteId(null)} className="border-white/10 hover:bg-white/5 text-white">
+                                        Cancel
+                                    </Button>
+                                    <Button onClick={confirmDelete} className="bg-red-600 hover:bg-red-700 text-white">
+                                        Delete
+                                    </Button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
 
             {/* Modal Form */}
             <AnimatePresence>

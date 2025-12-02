@@ -108,9 +108,15 @@ export default function SettingsPage() {
     const [system, setSystem] = React.useState(initialSystem);
     const [security, setSecurity] = React.useState(initialSecurity);
     const [notifications, setNotifications] = React.useState(initialNotifications);
+    const [newPassword, setNewPassword] = React.useState("");
+    const [confirmNewPassword, setConfirmNewPassword] = React.useState("");
 
     // Handlers
     const handleSaveClick = () => {
+        if (newPassword && newPassword !== confirmNewPassword) {
+            showToast("New passwords do not match.", "error");
+            return;
+        }
         setIsConfirmingSave(true);
     };
 
@@ -120,6 +126,8 @@ export default function SettingsPage() {
         setTimeout(() => {
             setIsSaving(false);
             setIsConfirmingSave(false);
+            setNewPassword("");
+            setConfirmNewPassword("");
             showToast("Settings saved successfully!", "success");
         }, 1500);
     };
@@ -309,7 +317,23 @@ export default function SettingsPage() {
                                                 </div>
                                                 <div className="space-y-2">
                                                     <Label htmlFor="newPass">New Password</Label>
-                                                    <Input id="newPass" type="password" className="bg-white/5 border-white/10" />
+                                                    <Input
+                                                        id="newPass"
+                                                        type="password"
+                                                        className="bg-white/5 border-white/10"
+                                                        value={newPassword}
+                                                        onChange={(e) => setNewPassword(e.target.value)}
+                                                    />
+                                                </div>
+                                                <div className="space-y-2 md:col-start-2">
+                                                    <Label htmlFor="confirmNewPass">Confirm New Password</Label>
+                                                    <Input
+                                                        id="confirmNewPass"
+                                                        type="password"
+                                                        className="bg-white/5 border-white/10"
+                                                        value={confirmNewPassword}
+                                                        onChange={(e) => setConfirmNewPassword(e.target.value)}
+                                                    />
                                                 </div>
                                             </div>
                                         </div>

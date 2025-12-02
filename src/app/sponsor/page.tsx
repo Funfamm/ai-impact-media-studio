@@ -47,9 +47,9 @@ export default function SponsorPage() {
 
             showToast("Sponsorship Inquiry Sent Successfully! Check your email.", "success");
             form.reset();
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
-            showToast("Failed to send inquiry. Please try again.", "error");
+            showToast(`Failed: ${error.message}`, "error");
         } finally {
             setIsSubmitting(false);
         }

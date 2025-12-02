@@ -1,3 +1,6 @@
+import { db, storage } from "@/lib/firebase";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
@@ -19,7 +22,7 @@ export async function POST(request: Request) {
         const voiceSamples = formData.getAll("voiceSamples");
 
         // Basic validation
-        if (!firstName || !lastName || !email || !phone || !gender || !signature) {
+        if (!firstName || !lastName || !email || !gender || !signature) {
             return NextResponse.json(
                 { error: "Missing required fields" },
                 { status: 400 }
@@ -40,20 +43,43 @@ export async function POST(request: Request) {
             );
         }
 
-        // Mock processing - In a real app, we would upload files to S3/Blob storage
-        // and save the application to a database.
-        console.log("--- New Casting Application Received ---");
-        console.log(`Name: ${firstName} ${lastName}`);
-        console.log(`Email: ${email}`);
-        console.log(`Phone: ${phone}`);
-        console.log(`Gender: ${gender}`);
-        console.log(`Social: ${socialType} - ${socialHandle}`);
-        console.log(`Signature: ${signature}`);
-        console.log(`Headshots: ${headshots.length} files`);
-        console.log(`Voice Samples: ${voiceSamples.length} files`);
+        // Upload files to Firebase Storage
+        const uploadFile = async (file: File, path: string) => {
+            const storageRef = ref(storage, path);
+            const arrayBuffer = await file.arrayBuffer();
+            await uploadBytes(storageRef, arrayBuffer);
+            return await getDownloadURL(storageRef);
+        };
 
-        // Simulate processing delay
-        await new Promise((resolve) => setTimeout(resolve, 1500));
+        const headshotUrls = await Promise.all(
+            headshots.map((file, index) =>
+                uploadFile(file as File, `casting/${Date.now()}_headshot_${index}_${(file as File).name}`)
+            )
+        );
+
+        const voiceSampleUrls = await Promise.all(
+            voiceSamples.map((file, index) =>
+                uploadFile(file as File, `casting/${Date.now()}_voice_${index}_${(file as File).name}`)
+            )
+        );
+
+        // Save to Firestore
+        await addDoc(collection(db, "casting_applications"), {
+            firstName,
+            lastName,
+            email,
+            phone,
+            gender,
+            socialHandle,
+            socialType,
+            signature,
+            headshotUrls,
+            voiceSampleUrls,
+            status: "pending",
+            aiEvaluation: null, // Placeholder for future AI evaluation
+            createdAt: serverTimestamp(),
+        });
+        console.log("Casting application saved to Firestore");
 
         // Send email using Resend
         if (process.env.RESEND_API_KEY) {
@@ -82,7 +108,31 @@ export async function POST(request: Request) {
                     </ul>
                 `
             });
-            console.log("Email sent successfully via Resend");
+            console.log("Admin notification sent successfully via Resend");
+
+            // Send confirmation email to the applicant
+            await resend.emails.send({
+                from: process.env.SENDER_EMAIL || 'onboarding@resend.dev',
+                to: email as string,
+                subject: `Application Received - AI Impact Media Studio`,
+                html: `
+                    <div style="font-family: sans-serif; color: #333;">
+                        <h1>Application Received</h1>
+                        <p>Dear ${firstName},</p>
+                        <p>Thank you for submitting your casting application to AI Impact Media Studio.</p>
+                        <p>We have successfully received your details and media assets. Our casting directors will review your submission.</p>
+                        <p>If your profile matches our upcoming production needs, we will contact you directly.</p>
+                        <br>
+                        <p style="font-size: 0.9em; color: #666; font-style: italic;">
+                            Please note: As outlined in the application, the contribution of your likeness and voice for our projects is a voluntary collaboration focused on professional exposure and portfolio development, and does not include financial compensation. We truly appreciate your willingness to be part of our creative vision.
+                        </p>
+                        <br>
+                        <p>Best regards,</p>
+                        <p><strong>The AI Impact Media Studio Team</strong></p>
+                    </div>
+                `
+            });
+            console.log("Applicant confirmation email sent successfully via Resend");
         } else {
             console.warn("RESEND_API_KEY not found. Email sending skipped (simulated).");
             console.log("--- SIMULATED EMAIL ---");

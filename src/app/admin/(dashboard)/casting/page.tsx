@@ -5,17 +5,19 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Eye, Check, X, Download, MessageSquare, Bot, Mic } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { db } from "@/lib/firebase";
+import { collection, onSnapshot, query, orderBy, doc, updateDoc } from "firebase/firestore";
 
-// Mock Data Interface
+// Interface updated to match Firestore data
 interface CastingSubmission {
-    id: number;
+    id: string;
     name: string;
-    role: string;
+    role: string; // We might need to map this or add it to the form if missing
     email: string;
     status: 'Pending' | 'Approved' | 'Rejected';
     date: string;
     headshot: string;
-    about: string;
+    about: string; // Mapped from 'signature' or added field? Using signature for now as placeholder
     aiReport?: string;
     files: {
         headshot: string;
@@ -23,67 +25,7 @@ interface CastingSubmission {
     };
 }
 
-// Mock Data
-const initialSubmissions: CastingSubmission[] = [
-    {
-        id: 1,
-        name: "Sarah Connor",
-        role: "Lead Protagonist",
-        email: "sarah.c@example.com",
-        status: "Pending",
-        date: "2025-12-01",
-        headshot: "headshot_01.jpg",
-        about: "Experienced action actress with a background in martial arts. I have performed in several sci-fi indie films and am looking for a challenging role that pushes my physical and emotional limits.",
-        files: {
-            headshot: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=400&fit=crop",
-            voiceSample: "https://example.com/voice-sample-01.mp3"
-        }
-    },
-    {
-        id: 2,
-        name: "John Reese",
-        role: "Antagonist",
-        email: "j.reese@example.com",
-        status: "Approved",
-        date: "2025-11-30",
-        headshot: "headshot_02.jpg",
-        about: "Classically trained actor specializing in complex villains. I bring a subtle intensity to my roles.",
-        files: {
-            headshot: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=400&fit=crop",
-            voiceSample: "https://example.com/voice-sample-02.mp3"
-        }
-    },
-    {
-        id: 3,
-        name: "Elena Fisher",
-        role: "Supporting Character",
-        email: "elena.f@example.com",
-        status: "Rejected",
-        date: "2025-11-29",
-        headshot: "headshot_03.jpg",
-        about: "Journalist turned actress. Great at improvisation and dialogue.",
-        files: {
-            headshot: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop",
-            voiceSample: "https://example.com/voice-sample-03.mp3"
-        }
-    },
-    {
-        id: 4,
-        name: "Nathan Drake",
-        role: "Lead Protagonist",
-        email: "nate@example.com",
-        status: "Pending",
-        date: "2025-11-28",
-        headshot: "headshot_04.jpg",
-        about: "Adventure seeker and stunt performer. I do all my own stunts and have a natural charisma on camera.",
-        files: {
-            headshot: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop",
-            voiceSample: "https://example.com/voice-sample-04.mp3"
-        }
-    }
-];
-
-// Mock AI Evaluation Logic
+// Mock AI Evaluation Logic (Client-side for now)
 const generateAIReport = (about: string, role: string): string => {
     const keywords = ["action", "martial arts", "stunt", "drama", "trained", "intensity"];
     const score = keywords.reduce((acc, keyword) => about.toLowerCase().includes(keyword) ? acc + 1 : acc, 0);
@@ -101,21 +43,79 @@ const generateAIReport = (about: string, role: string): string => {
 };
 
 export default function AdminCastingPage() {
-    const [submissions, setSubmissions] = React.useState<CastingSubmission[]>(initialSubmissions);
+    const [submissions, setSubmissions] = React.useState<CastingSubmission[]>([]);
     const [selectedSubmission, setSelectedSubmission] = React.useState<CastingSubmission | null>(null);
 
-    const handleStatusUpdate = (id: number, newStatus: 'Approved' | 'Rejected') => {
-        setSubmissions(prev => prev.map(sub =>
-            sub.id === id ? { ...sub, status: newStatus } : sub
-        ));
-        if (selectedSubmission?.id === id) {
-            setSelectedSubmission(prev => prev ? { ...prev, status: newStatus } : null);
+    // Real-time listener for casting applications
+    React.useEffect(() => {
+        const q = query(collection(db, "casting_applications"), orderBy("createdAt", "desc"));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const data = snapshot.docs.map(doc => {
+                const d = doc.data();
+                // Map Firestore fields to UI interface
+                return {
+                    id: doc.id,
+                    name: `${d.firstName} ${d.lastName}`,
+                    role: "General Applicant", // Default role since it's not in the form yet
+                    email: d.email,
+                    status: d.status.charAt(0).toUpperCase() + d.status.slice(1) as 'Pending' | 'Approved' | 'Rejected',
+                    date: d.createdAt?.toDate ? d.createdAt.toDate().toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+                    headshot: d.headshotUrls?.[0] || "",
+                    about: `Signature: ${d.signature}\nPhone: ${d.phone}\nSocial: ${d.socialType} - ${d.socialHandle}`,
+                    aiReport: d.aiEvaluation,
+                    files: {
+                        headshot: d.headshotUrls?.[0] || "",
+                        voiceSample: d.voiceSampleUrls?.[0] || ""
+                    }
+                };
+            }) as CastingSubmission[];
+            setSubmissions(data);
+        });
+        return () => unsubscribe();
+    }, []);
+
+    const handleStatusUpdate = async (id: string, newStatus: 'Approved' | 'Rejected') => {
+        try {
+            const subRef = doc(db, "casting_applications", id);
+            await updateDoc(subRef, { status: newStatus.toLowerCase() });
+            if (selectedSubmission?.id === id) {
+                setSelectedSubmission(prev => prev ? { ...prev, status: newStatus } : null);
+            }
+        } catch (error) {
+            console.error("Error updating status:", error);
         }
     };
 
     const handleViewDetails = (submission: CastingSubmission) => {
         const report = generateAIReport(submission.about, submission.role);
         setSelectedSubmission({ ...submission, aiReport: report });
+    };
+
+    const handleExportCSV = () => {
+        const headers = ["Name", "Role", "Email", "Status", "Date", "Headshot URL", "Voice Sample URL", "About"];
+        const csvContent = [
+            headers.join(","),
+            ...submissions.map(sub => [
+                `"${sub.name}"`,
+                `"${sub.role}"`,
+                `"${sub.email}"`,
+                `"${sub.status}"`,
+                `"${sub.date}"`,
+                `"${sub.files.headshot}"`,
+                `"${sub.files.voiceSample}"`,
+                `"${sub.about.replace(/"/g, '""')}"` // Escape quotes
+            ].join(","))
+        ].join("\n");
+
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", `casting_submissions_${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = "hidden";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     };
 
     return (
@@ -125,7 +125,7 @@ export default function AdminCastingPage() {
                     <h2 className="text-3xl font-bold text-white mb-2">Casting Management</h2>
                     <p className="text-gray-400">Review and manage casting submissions.</p>
                 </div>
-                <Button className="bg-white text-black hover:bg-gray-200">
+                <Button onClick={handleExportCSV} className="bg-white text-black hover:bg-gray-200">
                     <Download className="mr-2 h-4 w-4" />
                     Export CSV
                 </Button>

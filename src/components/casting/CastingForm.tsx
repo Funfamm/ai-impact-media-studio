@@ -40,10 +40,11 @@ export function CastingForm() {
             return;
         }
 
+        const form = e.currentTarget;
         setIsSubmitting(true);
 
         try {
-            const formData = new FormData(e.currentTarget);
+            const formData = new FormData(form);
 
             // Append files manually since they are in state, not directly in the form inputs in a way FormData picks up automatically if they are custom components
             // Actually, the MediaUpload component doesn't use a named input that FormData would pick up automatically for files if it's just a div with hidden input.
@@ -73,7 +74,7 @@ export function CastingForm() {
             showToast("Application Submitted Successfully!", "success");
 
             // Reset form
-            e.currentTarget.reset();
+            form.reset();
             setHeadshots([]);
             setVoiceSamples([]);
             setPermissionGranted(false);
@@ -138,8 +139,8 @@ export function CastingForm() {
                             <Input id="email" name="email" type="email" placeholder="jane@example.com" required className="h-14 bg-white/5 border-white/10 focus:border-primary/50 focus:ring-primary/20 transition-all" />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="phone" className="text-gray-300">Phone Number <span className="text-red-500">*</span></Label>
-                            <Input id="phone" name="phone" type="tel" placeholder="+1 (555) 000-0000" required className="h-14 bg-white/5 border-white/10 focus:border-primary/50 focus:ring-primary/20 transition-all" />
+                            <Label htmlFor="phone" className="text-gray-300">Phone Number <span className="text-gray-500 text-sm font-normal">(Optional)</span></Label>
+                            <Input id="phone" name="phone" type="tel" placeholder="+1 (555) 000-0000" className="h-14 bg-white/5 border-white/10 focus:border-primary/50 focus:ring-primary/20 transition-all" />
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="socialHandle" className="text-gray-300">Social Media Handle <span className="text-red-500">*</span></Label>

@@ -8,6 +8,7 @@ import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 import { useToast } from "@/components/ui/Toast";
+import { Magnetic } from "@/components/ui/Magnetic";
 
 // Inline cn for safety
 import { clsx, type ClassValue } from "clsx";
@@ -39,16 +40,16 @@ export function Navbar() {
 
     return (
         <header className={cnSafe(
-            "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
-            isScrolled ? "bg-black/80 backdrop-blur-md border-b border-white/5 py-4" : "bg-black py-6"
+            "fixed top-0 left-0 right-0 z-50 transition-all duration-500",
+            isScrolled ? "bg-black/60 backdrop-blur-xl border-b border-white/5 py-4 shadow-[0_4px_30px_rgba(0,0,0,0.1)]" : "bg-transparent py-6"
         )}>
             <Container>
                 <nav className="flex items-center justify-between">
-                    <Link href="/" className="text-xl font-bold tracking-tighter flex items-center gap-2">
-                        <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center">
+                    <Link href="/" className="text-xl font-bold tracking-tighter flex items-center gap-2 group">
+                        <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-[0_0_15px_rgba(59,130,246,0.5)]">
                             <span className="text-white font-bold">AI</span>
                         </div>
-                        <span className="hidden sm:inline-block font-bold bg-clip-text text-transparent bg-gradient-to-r from-white via-purple-200 to-white animate-pulse">Impact Studio</span>
+                        <span className="hidden sm:inline-block font-bold bg-clip-text text-transparent bg-gradient-to-r from-white via-purple-200 to-white animate-pulse group-hover:animate-none group-hover:text-white transition-colors">Impact Studio</span>
                     </Link>
 
                     {/* Desktop Nav */}
@@ -69,22 +70,26 @@ export function Navbar() {
                                 )} />
                             </Link>
                         ))}
-                        <Link href="/donation">
-                            <Button
-                                size="sm"
-                                className="bg-gradient-to-r from-purple-600 to-pink-600 text-white border-none hover:opacity-90"
-                            >
-                                Donate
-                            </Button>
-                        </Link>
-                        <Link href="/admin/login">
-                            <Button
-                                size="sm"
-                                className="bg-white text-black hover:bg-gray-200 border-none"
-                            >
-                                Client Login
-                            </Button>
-                        </Link>
+                        <Magnetic>
+                            <Link href="/donation">
+                                <Button
+                                    size="sm"
+                                    className="bg-gradient-to-r from-purple-600 to-pink-600 text-white border-none hover:opacity-90"
+                                >
+                                    Donate
+                                </Button>
+                            </Link>
+                        </Magnetic>
+                        <Magnetic>
+                            <Link href="/admin/login">
+                                <Button
+                                    size="sm"
+                                    className="bg-white text-black hover:bg-gray-200 border-none"
+                                >
+                                    Client Login
+                                </Button>
+                            </Link>
+                        </Magnetic>
                     </div>
 
                     {/* Mobile Menu Button */}

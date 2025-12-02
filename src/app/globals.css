@@ -21,11 +21,20 @@
   }
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   background: linear-gradient(to bottom, #0f0f0f, #1c1c1c);
   color: var(--foreground);
   font-family: var(--font-sans), sans-serif;
   min-height: 100vh;
+}
+
+::selection {
+  background: var(--color-primary);
+  color: white;
 }
 
 @layer utilities {

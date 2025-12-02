@@ -1,3 +1,5 @@
+import { db } from "@/lib/firebase";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
@@ -13,16 +15,25 @@ export async function POST(request: Request) {
             );
         }
 
-        // Mock processing - In a real app, we would save to database
-        console.log("--- New Sponsor Inquiry Received ---");
-        console.log(`Company: ${companyName}`);
-        console.log(`Contact: ${contactName}`);
-        console.log(`Email: ${email}`);
-        console.log(`Type: ${partnershipType}`);
-        console.log(`Message: ${message}`);
-
-        // Simulate processing delay
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        // Save to Firestore
+        try {
+            await addDoc(collection(db, "sponsors"), {
+                companyName,
+                contactName,
+                email,
+                partnershipType,
+                message,
+                status: "pending", // Default status
+                createdAt: serverTimestamp(),
+            });
+            console.log("Sponsor inquiry saved to Firestore");
+        } catch (dbError: any) {
+            console.error("Error saving to Firestore:", dbError);
+            return NextResponse.json(
+                { error: `Firestore Error: ${dbError.message}` },
+                { status: 500 }
+            );
+        }
 
         // Send email using Resend
         if (process.env.RESEND_API_KEY) {
@@ -43,7 +54,26 @@ export async function POST(request: Request) {
                     <p>${message}</p>
                 `
             });
-            console.log("Email sent successfully via Resend");
+            console.log("Admin notification sent successfully via Resend");
+
+            // Send confirmation email to the user
+            await resend.emails.send({
+                from: process.env.SENDER_EMAIL || 'onboarding@resend.dev',
+                to: email,
+                subject: `Thank you for your interest in AI Impact Media Studio`,
+                html: `
+                    <div style="font-family: sans-serif; color: #333;">
+                        <h1>Thank You for Reaching Out!</h1>
+                        <p>Dear ${contactName},</p>
+                        <p>We have received your sponsorship inquiry regarding <strong>${companyName}</strong>.</p>
+                        <p>Our team is reviewing your proposal for a <strong>${partnershipType}</strong> partnership and will get back to you shortly.</p>
+                        <br>
+                        <p>Best regards,</p>
+                        <p><strong>The AI Impact Media Studio Team</strong></p>
+                    </div>
+                `
+            });
+            console.log("User confirmation email sent successfully via Resend");
         } else {
             console.warn("RESEND_API_KEY not found. Email sending skipped (simulated).");
             console.log("--- SIMULATED EMAIL ---");

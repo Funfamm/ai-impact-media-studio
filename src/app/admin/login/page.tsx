@@ -27,7 +27,7 @@ export default function AdminLoginPage() {
             if (username === "admin" && password === "admin") {
                 // Set a mock cookie or local storage
                 localStorage.setItem("admin_auth", "true");
-                router.push("/admin");
+                window.location.href = "/admin";
             } else {
                 setError("Invalid credentials");
                 setIsLoading(false);
