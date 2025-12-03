@@ -27,10 +27,11 @@ export async function POST(request: Request) {
                 createdAt: serverTimestamp(),
             });
             console.log("Sponsor inquiry saved to Firestore");
-        } catch (dbError: any) {
+        } catch (dbError: unknown) {
             console.error("Error saving to Firestore:", dbError);
+            const errorMessage = dbError instanceof Error ? dbError.message : "Unknown Firestore error";
             return NextResponse.json(
-                { error: `Firestore Error: ${dbError.message}` },
+                { error: `Firestore Error: ${errorMessage}` },
                 { status: 500 }
             );
         }

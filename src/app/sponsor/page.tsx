@@ -47,9 +47,10 @@ export default function SponsorPage() {
 
             showToast("Sponsorship Inquiry Sent Successfully! Check your email.", "success");
             form.reset();
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error(error);
-            showToast(`Failed: ${error.message}`, "error");
+            const message = error instanceof Error ? error.message : "Submission failed";
+            showToast(`Failed: ${message}`, "error");
         } finally {
             setIsSubmitting(false);
         }
@@ -68,7 +69,7 @@ export default function SponsorPage() {
                     </h1>
                     <p className="text-gray-400 max-w-2xl mx-auto text-lg">
                         Partner with <span className="text-gradient font-bold">AI Impact</span> Media Studio to reach the next generation of creators and audiences.
-                        Let's build the future of entertainment together.
+                        Let&apos;s build the future of entertainment together.
                     </p>
                 </div>
 

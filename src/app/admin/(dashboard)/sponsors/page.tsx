@@ -57,9 +57,10 @@ export default function SponsorsPage() {
                 setError(`Error loading sponsors: ${err.message}`);
             });
             return () => unsubscribe();
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error("Setup Error:", err);
-            setError(`Error setting up listener: ${err.message}`);
+            const message = err instanceof Error ? err.message : String(err);
+            setError(`Error setting up listener: ${message}`);
         }
     }, []);
 
@@ -341,7 +342,7 @@ export default function SponsorsPage() {
                                                 <label className="text-xs text-gray-500 uppercase tracking-wider mb-2 block">Proposal / Message</label>
                                                 <div className="bg-white/5 rounded-lg p-4 border border-white/10">
                                                     <p className="text-gray-300 text-sm leading-relaxed italic">
-                                                        "{selectedSponsor.message}"
+                                                        &quot;{selectedSponsor.message}&quot;
                                                     </p>
                                                 </div>
                                             </div>

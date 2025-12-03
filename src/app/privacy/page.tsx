@@ -21,7 +21,7 @@ export default function PrivacyPage() {
                         <section>
                             <h2 className="text-2xl font-semibold text-white mb-4">1. Introduction</h2>
                             <p>
-                                AI Impact Media Studio ("we," "our," or "us") is committed to protecting your privacy.
+                                AI Impact Media Studio (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;) is committed to protecting your privacy.
                                 This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website
                                 and use our services, including our casting and media production platforms.
                             </p>

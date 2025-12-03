@@ -233,7 +233,7 @@ export default function AdminCastingPage() {
                                         <div className="pt-4 border-t border-white/10">
                                             <label className="text-xs text-gray-500 uppercase tracking-wider mb-2 block">About Candidate</label>
                                             <p className="text-gray-300 text-sm leading-relaxed italic">
-                                                "{selectedSubmission.about}"
+                                                &quot;{selectedSubmission.about}&quot;
                                             </p>
                                         </div>
 

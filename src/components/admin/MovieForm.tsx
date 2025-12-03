@@ -35,6 +35,10 @@ export function MovieForm({ initialData, onSubmit, onCancel, isLoading }: MovieF
     const [posterPreview, setPosterPreview] = useState<string>(initialData?.posterUrl || "");
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    const [videoFile, setVideoFile] = useState<File | null>(null);
+    const [videoPreview, setVideoPreview] = useState<string>(initialData?.videoUrl || "");
+    const videoInputRef = useRef<HTMLInputElement>(null);
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
@@ -52,16 +56,31 @@ export function MovieForm({ initialData, onSubmit, onCancel, isLoading }: MovieF
         }
     };
 
+    const handleVideoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            setVideoFile(file);
+            setVideoPreview(URL.createObjectURL(file));
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
         try {
             let posterUrl = formData.posterUrl || "";
+            let videoUrl = formData.videoUrl || "";
 
             if (posterFile) {
                 const storageRef = ref(storage, `posters/${Date.now()}_${posterFile.name}`);
                 const snapshot = await uploadBytes(storageRef, posterFile);
                 posterUrl = await getDownloadURL(snapshot.ref);
+            }
+
+            if (videoFile) {
+                const storageRef = ref(storage, `trailers/${Date.now()}_${videoFile.name}`);
+                const snapshot = await uploadBytes(storageRef, videoFile);
+                videoUrl = await getDownloadURL(snapshot.ref);
             }
 
             if (!posterUrl) {
@@ -74,7 +93,7 @@ export function MovieForm({ initialData, onSubmit, onCancel, isLoading }: MovieF
                 tagline: formData.tagline || "",
                 description: formData.description!,
                 posterUrl,
-                videoUrl: formData.videoUrl || "",
+                videoUrl,
                 year: formData.year!,
                 genre: formData.genre!,
                 duration: formData.duration || "",
@@ -204,14 +223,47 @@ export function MovieForm({ initialData, onSubmit, onCancel, isLoading }: MovieF
             </div>
 
             <div className="space-y-2">
-                <Label htmlFor="videoUrl">Trailer URL (Video)</Label>
+                <Label>Trailer Video</Label>
+                <div
+                    className="border-2 border-dashed border-white/10 rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer hover:bg-white/5 transition-colors"
+                    onClick={() => videoInputRef.current?.click()}
+                >
+                    {videoPreview ? (
+                        <div className="relative w-full max-w-[300px] aspect-video">
+                            <video src={videoPreview} className="w-full h-full object-cover rounded-md" controls />
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setVideoPreview("");
+                                    setVideoFile(null);
+                                    setFormData(prev => ({ ...prev, videoUrl: "" }));
+                                }}
+                                className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1 text-white hover:bg-red-600 z-10"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="text-center py-8">
+                            <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                            <p className="text-sm text-gray-400">Click to upload trailer (MP4/WebM)</p>
+                        </div>
+                    )}
+                    <input
+                        ref={videoInputRef}
+                        type="file"
+                        accept="video/*"
+                        className="hidden"
+                        onChange={handleVideoFileChange}
+                    />
+                </div>
                 <Input
-                    id="videoUrl"
                     name="videoUrl"
                     value={formData.videoUrl}
                     onChange={handleChange}
-                    placeholder="https://..."
-                    className="bg-white/5 border-white/10"
+                    placeholder="Or paste external URL..."
+                    className="bg-white/5 border-white/10 mt-2"
                 />
             </div>
 

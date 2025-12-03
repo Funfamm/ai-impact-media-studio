@@ -6,7 +6,9 @@ function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
 }
 
-interface ContainerProps extends React.HTMLAttributes<HTMLDivElement> { }
+interface ContainerProps extends React.HTMLAttributes<HTMLDivElement> {
+    children: React.ReactNode;
+}
 
 const Container = React.forwardRef<HTMLDivElement, ContainerProps>(
     ({ className, ...props }, ref) => {

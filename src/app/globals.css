@@ -1,5 +1,6 @@
 @import "tailwindcss";
 
+/* stylelint-disable at-rule-no-unknown */
 @theme inline {
   --color-background: #0a0a0a;
   --color-foreground: #ededed;
@@ -39,11 +40,17 @@ body {
 
 @layer utilities {
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-[var(--color-primary-gradient-from)] to-[var(--color-primary-gradient-to)];
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    background-image: linear-gradient(to right, var(--color-primary-gradient-from), var(--color-primary-gradient-to));
   }
 
   .glass {
-    @apply bg-white/5 backdrop-blur-lg border border-white/10;
+    background-color: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
   }
 
   /* Movies Page Typography */
@@ -52,6 +59,7 @@ body {
     line-height: 1.2;
     display: -webkit-box;
     -webkit-line-clamp: 1;
+    line-clamp: 1;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
@@ -60,6 +68,7 @@ body {
     .movie-title {
       font-size: clamp(1.25rem, 2.5vw, 1.75rem);
       -webkit-line-clamp: 2;
+      line-clamp: 2;
     }
   }
 
@@ -67,6 +76,7 @@ body {
     font-size: clamp(2rem, 6vw, 4rem);
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
     line-height: 1.1;
