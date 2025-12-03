@@ -2,7 +2,8 @@
 
 import * as React from "react";
 import { motion } from "framer-motion";
-import { Play, Info } from "lucide-react";
+import { Play } from "lucide-react";
+import NextImage from "next/image";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 import { VideoModal } from "@/components/ui/VideoModal";
@@ -11,7 +12,7 @@ import { useToast } from "@/components/ui/Toast";
 interface MovieHeroProps {
     title: string;
     description: string;
-    videoUrl?: string; // Optional for now, fallback to gradient
+    videoUrl?: string;
     posterUrl?: string;
     tags?: string[];
 }
@@ -20,6 +21,7 @@ export function MovieHero({
     title,
     description,
     videoUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+    posterUrl,
     tags = ["Sci-Fi", "2025"]
 }: MovieHeroProps) {
     const videoRef = React.useRef<HTMLVideoElement>(null);
@@ -51,16 +53,27 @@ export function MovieHero({
 
             {/* Video Background */}
             <div className="absolute inset-0 bg-black">
-                <video
-                    ref={videoRef}
-                    className="h-full w-full object-cover opacity-60"
-                    src={videoUrl}
-                    autoPlay
-                    muted
-                    loop
-                    playsInline
-                    preload="metadata"
-                />
+                {videoUrl ? (
+                    <video
+                        ref={videoRef}
+                        className="h-full w-full object-cover opacity-60"
+                        src={videoUrl}
+                        poster={posterUrl}
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                        preload="metadata"
+                    />
+                ) : posterUrl ? (
+                    <NextImage
+                        src={posterUrl}
+                        alt={title}
+                        fill
+                        className="object-cover opacity-60"
+                        priority
+                    />
+                ) : null}
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
             </div>
 

@@ -56,7 +56,7 @@ export function MovieRail({ title, movies }: MovieRailProps) {
                             whileInView={{ opacity: 1, x: 0 }}
                             viewport={{ once: true }}
                             transition={{ delay: index * 0.1, duration: 0.5 }}
-                            className="scroll-snap-align-start w-[100px] md:w-[200px]"
+                            className="scroll-snap-align-start w-[140px] md:w-[200px]"
                         >
                             <MovieCard
                                 title={movie.title}
