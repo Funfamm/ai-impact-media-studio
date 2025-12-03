@@ -17,12 +17,13 @@ interface MovieCardProps {
     year?: string;
     genre?: string;
     className?: string;
+    videoUrl?: string;
 }
 
 import * as React from "react";
 import { VideoModal } from "@/components/ui/VideoModal";
 
-export function MovieCard({ title, imageUrl, year, genre, className }: MovieCardProps) {
+export function MovieCard({ title, imageUrl, year, genre, className, videoUrl }: MovieCardProps) {
     const [isVideoOpen, setIsVideoOpen] = React.useState(false);
 
     return (
@@ -30,6 +31,7 @@ export function MovieCard({ title, imageUrl, year, genre, className }: MovieCard
             <VideoModal
                 isOpen={isVideoOpen}
                 onClose={() => setIsVideoOpen(false)}
+                videoUrl={videoUrl}
             />
             <div
                 className={cnSafe("flex flex-col gap-2 group cursor-pointer", className)}

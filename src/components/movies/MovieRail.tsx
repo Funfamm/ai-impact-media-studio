@@ -63,6 +63,7 @@ export function MovieRail({ title, movies }: MovieRailProps) {
                                 year={movie.year}
                                 genre={movie.genre}
                                 imageUrl={movie.posterUrl}
+                                videoUrl={movie.videoUrl}
                             />
                         </motion.div>
                     ))}

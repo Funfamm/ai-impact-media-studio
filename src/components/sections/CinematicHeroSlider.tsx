@@ -166,11 +166,11 @@ export function CinematicHeroSlider() {
 
     return (
         <section className="relative h-screen w-full overflow-hidden bg-black">
-            {/* <VideoModal
+            <VideoModal
                 isOpen={isVideoOpen}
                 onClose={() => setIsVideoOpen(false)}
                 videoUrl={currentSlide?.videoUrl}
-            /> */}
+            />
 
             <div className="absolute inset-0 w-full h-full">
                 {/* Background Image/Video */}

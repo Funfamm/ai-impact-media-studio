@@ -133,24 +133,24 @@ export default function SponsorPage() {
                             <form className="space-y-6" onSubmit={handleSubmit}>
                                 <div className="space-y-2">
                                     <Label htmlFor="companyName">Company Name</Label>
-                                    <Input id="companyName" placeholder="Tech Corp Inc." className="h-12" required />
+                                    <Input id="companyName" name="companyName" placeholder="Tech Corp Inc." className="h-12" required />
                                 </div>
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div className="space-y-2">
                                         <Label htmlFor="contactName">Contact Name</Label>
-                                        <Input id="contactName" placeholder="Jane Doe" className="h-12" required />
+                                        <Input id="contactName" name="contactName" placeholder="Jane Doe" className="h-12" required />
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="email">Business Email</Label>
-                                        <Input id="email" type="email" placeholder="jane@techcorp.com" className="h-12" required />
+                                        <Input id="email" name="email" type="email" placeholder="jane@techcorp.com" className="h-12" required />
                                     </div>
                                 </div>
 
                                 <div className="space-y-2">
                                     <Label htmlFor="partnershipType">Partnership Interest</Label>
                                     <div className="relative">
-                                        <select id="partnershipType" required className="flex h-12 w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary appearance-none cursor-pointer hover:bg-surface-hover transition-colors">
+                                        <select id="partnershipType" name="partnershipType" required className="flex h-12 w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary appearance-none cursor-pointer hover:bg-surface-hover transition-colors">
                                             <option value="" className="bg-surface">Select Type</option>
                                             <option value="brand-integration" className="bg-surface">Brand Integration</option>
                                             <option value="event-sponsorship" className="bg-surface">Event Sponsorship</option>
@@ -170,6 +170,7 @@ export default function SponsorPage() {
                                     <Label htmlFor="message">Message</Label>
                                     <textarea
                                         id="message"
+                                        name="message"
                                         rows={4}
                                         className="flex w-full rounded-lg border border-border bg-surface px-3 py-3 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 text-foreground placeholder-gray-500"
                                         placeholder="Tell us about your sponsorship goals..."

@@ -3,6 +3,7 @@
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Users, Film, DollarSign, TrendingUp } from "lucide-react";
+import Link from "next/link";
 
 const stats = [
     {
@@ -132,12 +133,12 @@ export default function AdminDashboardPage() {
                                     <span className="text-xs text-gray-500 font-mono">{activity.time}</span>
                                 </div>
                                 <p className="text-gray-400 text-xs leading-relaxed mb-2">{activity.desc}</p>
-                                <a
+                                <Link
                                     href={activity.href}
                                     className="inline-flex items-center text-xs font-medium text-primary hover:text-primary/80 transition-colors"
                                 >
                                     View Details &rarr;
-                                </a>
+                                </Link>
                             </div>
                         </div>
                     ))}

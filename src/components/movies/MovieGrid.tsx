@@ -48,6 +48,7 @@ export function MovieGrid({ title, movies }: MovieGridProps) {
                                 year={movie.year}
                                 genre={movie.genre}
                                 imageUrl={movie.posterUrl}
+                                videoUrl={movie.videoUrl}
                                 className="w-full"
                             />
                         </motion.div>
