@@ -108,11 +108,13 @@ export function CinematicHeroSlider() {
     React.useEffect(() => {
         if (slides.length === 0) return;
 
-        const currentSlideDuration = slides[currentIndex]?.sliderDuration || 8000;
+        // Interpret duration as seconds (default to 8 seconds if missing)
+        const rawDuration = slides[currentIndex]?.sliderDuration || 8;
+        const durationMs = rawDuration * 1000;
 
         const timer = setInterval(() => {
             nextSlide();
-        }, currentSlideDuration);
+        }, durationMs);
         return () => clearInterval(timer);
     }, [currentIndex, slides, nextSlide]);
 
@@ -124,44 +126,39 @@ export function CinematicHeroSlider() {
     }
 
     if (slides.length === 0) {
-        return null; // Or a default static hero
+        return null;
     }
 
     const currentSlide = slides[currentIndex];
 
-    // Animation Variants
+    // Smooth Crossfade Variants
     const slideVariants = {
         enter: (direction: number) => ({
-            x: direction > 0 ? 1000 : -1000,
             opacity: 0,
-            zIndex: 0
+            scale: 1.05,
         }),
         center: {
             zIndex: 1,
-            x: 0,
-            opacity: 1
+            opacity: 1,
+            scale: 1,
         },
         exit: (direction: number) => ({
             zIndex: 0,
-            x: direction < 0 ? 1000 : -1000,
-            opacity: 0
+            opacity: 0,
+            scale: 1, // Keep scale stable on exit to avoid jarring shrink
         })
     };
 
-    // Ken Burns Effect Variants (Zoom Only)
-    const imageVariants: Variants = {
-        initial: () => ({
-            scale: 1,
-            x: "0%"
-        }),
-        animate: () => ({
+    // Ken Burns Effect (Gentle Zoom)
+    const kenBurnsVariants: Variants = {
+        initial: { scale: 1 },
+        animate: {
             scale: 1.1,
-            x: "0%", // No pan
             transition: {
-                duration: (currentSlide.sliderDuration || 8000) / 1000 + 2, // Slightly longer than slide duration
+                duration: ((currentSlide.sliderDuration || 8) * 1.5), // Slower than the slide duration for continuous movement
                 ease: "linear"
             }
-        })
+        }
     };
 
     return (
@@ -172,65 +169,87 @@ export function CinematicHeroSlider() {
                 videoUrl={currentSlide?.videoUrl}
             />
 
-            <div className="absolute inset-0 w-full h-full">
-                {/* Background Image/Video */}
-                <div className="absolute inset-0 overflow-hidden">
-                    {currentSlide.videoUrl ? (
-                        <video
-                            src={currentSlide.videoUrl}
-                            className="w-full h-full object-cover"
-                            autoPlay
-                            muted
-                            loop
-                            playsInline
-                        />
-                    ) : (
-                        <NextImage
-                            src={currentSlide.posterUrl}
-                            alt={currentSlide.title}
-                            fill
-                            priority
-                            className="object-cover"
-                        />
-                    )}
-                    {/* Gradient Overlay for Readability */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
-                    <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/20 to-transparent" />
-                </div>
+            <AnimatePresence mode="popLayout" initial={false} custom={direction}>
+                <motion.div
+                    key={currentIndex}
+                    custom={direction}
+                    variants={slideVariants}
+                    initial="enter"
+                    animate="center"
+                    exit="exit"
+                    transition={{ opacity: { duration: 1.2, ease: "easeInOut" } }}
+                    className="absolute inset-0 w-full h-full"
+                >
+                    {/* Background Image/Video Container */}
+                    <div className="absolute inset-0 overflow-hidden">
+                        <motion.div
+                            variants={kenBurnsVariants}
+                            initial="initial"
+                            animate="animate"
+                            className="w-full h-full"
+                        >
+                            {currentSlide.videoUrl ? (
+                                <video
+                                    src={currentSlide.videoUrl}
+                                    className="w-full h-full object-cover"
+                                    autoPlay
+                                    muted
+                                    loop
+                                    playsInline
+                                />
+                            ) : (
+                                <NextImage
+                                    src={currentSlide.posterUrl}
+                                    alt={currentSlide.title}
+                                    fill
+                                    priority
+                                    className="object-cover"
+                                />
+                            )}
+                        </motion.div>
 
-                {/* Content */}
-                <Container className="relative h-full flex items-end pb-32 z-10">
-                    <div className="max-w-2xl">
-                        <div>
-                            <span className="inline-block px-3 py-1 mb-4 text-xs font-bold tracking-wider uppercase rounded-full bg-gradient-to-r from-primary to-purple-600 text-white">
-                                Now Streaming
-                            </span>
-                            <h1 className="text-5xl md:text-7xl font-bold text-white mb-2 tracking-tight">
-                                {currentSlide.title}
-                            </h1>
-                            <p className="text-xl md:text-2xl text-gray-300 mb-6 font-light italic">
-                                {currentSlide.tagline}
-                            </p>
-                            <p className="text-gray-400 mb-8 leading-relaxed max-w-lg">
-                                {currentSlide.description}
-                            </p>
-
-                            <div className="flex flex-wrap gap-4">
-                                {/* <Magnetic> */}
-                                <Button
-                                    size="lg"
-                                    className="bg-gradient-to-r from-primary to-purple-600 hover:opacity-90 border-none text-white font-bold px-8"
-                                    onClick={() => setIsVideoOpen(true)}
-                                >
-                                    <Play className="mr-2 h-5 w-5 fill-current" />
-                                    Watch Trailer
-                                </Button>
-                                {/* </Magnetic> */}
-                            </div>
-                        </div>
+                        {/* Gradient Overlays */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
+                        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/20 to-transparent" />
                     </div>
-                </Container>
-            </div>
+
+                    {/* Content */}
+                    <Container className="relative h-full flex items-end pb-32 z-10">
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.5, duration: 0.8 }}
+                            className="max-w-2xl"
+                        >
+                            <div>
+                                <span className="inline-block px-3 py-1 mb-4 text-xs font-bold tracking-wider uppercase rounded-full bg-gradient-to-r from-primary to-purple-600 text-white">
+                                    Now Streaming
+                                </span>
+                                <h1 className="text-5xl md:text-7xl font-bold text-white mb-2 tracking-tight">
+                                    {currentSlide.title}
+                                </h1>
+                                <p className="text-xl md:text-2xl text-gray-300 mb-6 font-light italic">
+                                    {currentSlide.tagline}
+                                </p>
+                                <p className="text-gray-400 mb-8 leading-relaxed max-w-lg">
+                                    {currentSlide.description}
+                                </p>
+
+                                <div className="flex flex-wrap gap-4">
+                                    <Button
+                                        size="lg"
+                                        className="bg-gradient-to-r from-primary to-purple-600 hover:opacity-90 border-none text-white font-bold px-8"
+                                        onClick={() => setIsVideoOpen(true)}
+                                    >
+                                        <Play className="mr-2 h-5 w-5 fill-current" />
+                                        Watch Trailer
+                                    </Button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </Container>
+                </motion.div>
+            </AnimatePresence>
 
             {/* Scroll Indicator */}
             <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2">
