@@ -18,8 +18,40 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AI Impact Media Studio",
-  description: "Cinematic, futuristic media production.",
+  metadataBase: new URL('https://ai-impact-media-studio.com'), // Replace with actual domain
+  title: {
+    default: "AI Impact Media Studio",
+    template: "%s | AI Impact Media Studio",
+  },
+  description: "Cinematic, futuristic media production powered by Artificial Intelligence. Join the revolution in storytelling.",
+  keywords: ["AI", "Media", "Production", "Film", "Casting", "Future", "Cinema", "Technology"],
+  authors: [{ name: "AI Impact Media Studio" }],
+  creator: "AI Impact Media Studio",
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://ai-impact-media-studio.com",
+    title: "AI Impact Media Studio",
+    description: "Cinematic, futuristic media production powered by Artificial Intelligence.",
+    siteName: "AI Impact Media Studio",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "AI Impact Media Studio",
+    description: "Cinematic, futuristic media production powered by Artificial Intelligence.",
+    creator: "@aiimpactmedia",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
 };
 
 import { ToastProvider } from "@/components/ui/Toast";

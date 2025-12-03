@@ -15,6 +15,10 @@ const firebaseConfig = {
     measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID ?? "",
 };
 
+if (!firebaseConfig.apiKey && typeof window !== 'undefined') {
+    console.error("Firebase API Key is missing. Check your environment variables.");
+}
+
 const app = initializeApp(firebaseConfig);
 // Analytics should only be initialized in the browser environment
 export const analytics = typeof window !== "undefined" ? getAnalytics(app) : null; // keep null on server
