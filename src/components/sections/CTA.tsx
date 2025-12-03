@@ -62,7 +62,7 @@ export function CTA() {
                     </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 lg:gap-8">
                     {actions.map((action, index) => (
                         <motion.div
                             key={action.title}
@@ -73,22 +73,22 @@ export function CTA() {
                             transition={{ duration: 0.5, delay: action.delay }}
                         >
                             <Link href={action.href} className="block h-full">
-                                <Card className="h-full p-8 flex flex-col items-center text-center hover:border-primary/50 transition-colors group relative overflow-hidden bg-white/5 backdrop-blur-sm border-white/10">
+                                <Card className="h-full p-4 md:p-8 flex flex-col items-center text-center hover:border-primary/50 transition-colors group relative overflow-hidden bg-white/5 backdrop-blur-sm border-white/10">
                                     <div className={`absolute inset-0 bg-gradient-to-br ${action.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-500`} />
 
-                                    <div className={`h-16 w-16 rounded-2xl bg-gradient-to-br ${action.gradient} p-4 mb-6 shadow-lg transform group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300`}>
+                                    <div className={`h-12 w-12 md:h-16 md:w-16 rounded-2xl bg-gradient-to-br ${action.gradient} p-3 md:p-4 mb-4 md:mb-6 shadow-lg transform group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300`}>
                                         <action.icon className="h-full w-full text-white" />
                                     </div>
 
-                                    <h3 className="text-2xl font-bold mb-3 text-white group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-gray-400 transition-all">
+                                    <h3 className="text-lg md:text-2xl font-bold mb-2 md:mb-3 text-white group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-gray-400 transition-all">
                                         {action.title}
                                     </h3>
-                                    <p className="text-gray-400 mb-8 flex-grow leading-relaxed group-hover:text-gray-300 transition-colors">
+                                    <p className="text-xs md:text-base text-gray-400 mb-4 md:mb-8 flex-grow leading-relaxed group-hover:text-gray-300 transition-colors line-clamp-3 md:line-clamp-none">
                                         {action.description}
                                     </p>
 
                                     <div className="w-full">
-                                        <div className="inline-flex items-center justify-center rounded-lg font-medium transition-all duration-300 px-6 py-3 text-base w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white group-hover:border-white/20 group-hover:shadow-[0_0_20px_rgba(255,255,255,0.1)]">
+                                        <div className="inline-flex items-center justify-center rounded-lg font-medium transition-all duration-300 px-4 py-2 md:px-6 md:py-3 text-sm md:text-base w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white group-hover:border-white/20 group-hover:shadow-[0_0_20px_rgba(255,255,255,0.1)]">
                                             {action.buttonText}
                                         </div>
                                     </div>
