@@ -13,6 +13,7 @@ interface MovieHeroProps {
     title: string;
     description: string;
     videoUrl?: string;
+    fullMovieUrl?: string;
     posterUrl?: string;
     tags?: string[];
 }
@@ -21,64 +22,67 @@ export function MovieHero({
     title,
     description,
     videoUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+    fullMovieUrl,
     posterUrl,
     tags = ["Sci-Fi", "2025"]
 }: MovieHeroProps) {
-    const videoRef = React.useRef<HTMLVideoElement>(null);
     const [isVideoOpen, setIsVideoOpen] = React.useState(false);
+    const [currentVideoUrl, setCurrentVideoUrl] = React.useState("");
     const { showToast } = useToast();
 
-    // Auto-pause on scroll logic
-    React.useEffect(() => {
-        const handleScroll = () => {
-            if (!videoRef.current) return;
-            if (window.scrollY > 50) {
-                videoRef.current.pause();
-            } else {
-                videoRef.current.play().catch(() => { });
-            }
-        };
+    const handlePosterClick = () => {
+        if (videoUrl) {
+            setCurrentVideoUrl(videoUrl);
+            setIsVideoOpen(true);
+        }
+    };
 
-        window.addEventListener("scroll", handleScroll);
-        return () => window.removeEventListener("scroll", handleScroll);
-    }, []);
+    const handlePlayClick = () => {
+        const urlToPlay = fullMovieUrl || videoUrl;
+        if (urlToPlay) {
+            setCurrentVideoUrl(urlToPlay);
+            setIsVideoOpen(true);
+        } else {
+            showToast("No video available", "error");
+        }
+    };
 
     return (
         <div className="relative w-full overflow-hidden h-[60vh] md:h-[70vh] lg:h-[90vh]">
             <VideoModal
                 isOpen={isVideoOpen}
                 onClose={() => setIsVideoOpen(false)}
-                videoUrl={videoUrl}
+                videoUrl={currentVideoUrl}
             />
 
-            {/* Video Background */}
-            <div className="absolute inset-0 bg-black">
-                {videoUrl ? (
-                    <video
-                        ref={videoRef}
-                        className="h-full w-full object-cover opacity-60"
-                        src={videoUrl}
-                        poster={posterUrl}
-                        autoPlay
-                        muted
-                        loop
-                        playsInline
-                        preload="metadata"
-                    />
-                ) : posterUrl ? (
-                    <NextImage
-                        src={posterUrl}
-                        alt={title}
-                        fill
-                        className="object-cover opacity-60"
-                        priority
-                    />
+            {/* Poster Background */}
+            <div
+                className="absolute inset-0 bg-black cursor-pointer group"
+                onClick={handlePosterClick}
+            >
+                {posterUrl ? (
+                    <>
+                        <NextImage
+                            src={posterUrl}
+                            alt={title}
+                            fill
+                            className="object-cover opacity-60 group-hover:opacity-70 transition-opacity"
+                            priority
+                        />
+                        {videoUrl && (
+                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <div className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                                    <Play className="h-10 w-10 text-white fill-white ml-1" />
+                                </div>
+                            </div>
+                        )}
+                    </>
                 ) : null}
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent pointer-events-none" />
             </div>
 
             {/* Content */}
-            <Container className="relative z-10 h-full flex flex-col justify-end pb-20 md:pb-24 lg:pb-32">
+            <Container className="relative z-10 h-full flex flex-col justify-end pb-8 md:pb-24 lg:pb-32">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -105,10 +109,10 @@ export function MovieHero({
                         <Button
                             size="lg"
                             className="gap-2 bg-white text-black hover:bg-gray-200 border-none"
-                            onClick={() => setIsVideoOpen(true)}
+                            onClick={handlePlayClick}
                         >
                             <Play className="fill-current h-5 w-5" />
-                            Play
+                            Play {fullMovieUrl ? "Movie" : "Trailer"}
                         </Button>
                     </div>
                 </motion.div>

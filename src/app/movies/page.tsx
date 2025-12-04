@@ -54,6 +54,7 @@ export default function MoviesPage() {
                         title={heroMovie.title}
                         description={heroMovie.description}
                         videoUrl={heroMovie.videoUrl}
+                        fullMovieUrl={heroMovie.fullMovieUrl}
                         posterUrl={heroMovie.posterUrl}
                         tags={[heroMovie.year, heroMovie.genre]}
                     />

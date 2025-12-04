@@ -6,19 +6,19 @@ import { motion, AnimatePresence } from "framer-motion";
 const showcaseItems = [
     {
         id: 1,
-        imageUrl: "https://picsum.photos/seed/cast1/800/1200",
+        imageUrl: "https://picsum.photos/seed/cast1/1600/900",
         quote: "Your Voice, Your Story.",
         subtext: "Join the next generation of AI-driven storytelling.",
     },
     {
         id: 2,
-        imageUrl: "https://picsum.photos/seed/cast2/800/1200",
+        imageUrl: "https://picsum.photos/seed/cast2/1600/900",
         quote: "Be The Face of Innovation.",
         subtext: "We are looking for unique characters to bring our worlds to life.",
     },
     {
         id: 3,
-        imageUrl: "https://picsum.photos/seed/cast3/800/1200",
+        imageUrl: "https://picsum.photos/seed/cast3/1600/900",
         quote: "Step Into The Spotlight.",
         subtext: "No experience needed. Just passion and authenticity.",
     },

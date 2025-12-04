@@ -39,40 +39,56 @@ export async function POST(request: Request) {
         // Send email using Resend
         if (process.env.RESEND_API_KEY) {
             const { Resend } = await import('resend');
+            const { EmailTemplate } = await import('@/components/email/EmailTemplate');
             const resend = new Resend(process.env.RESEND_API_KEY);
 
+            // Admin Notification
             await resend.emails.send({
                 from: process.env.SENDER_EMAIL || 'onboarding@resend.dev',
                 to: process.env.CONTACT_EMAIL || 'impact-media@impactaistudio.com',
                 subject: `New Sponsorship Inquiry from ${companyName}`,
-                html: `
-                    <h1>New Sponsorship Inquiry</h1>
-                    <p><strong>Company:</strong> ${companyName}</p>
-                    <p><strong>Contact Name:</strong> ${contactName}</p>
-                    <p><strong>Email:</strong> ${email}</p>
-                    <p><strong>Partnership Interest:</strong> ${partnershipType}</p>
-                    <p><strong>Message:</strong></p>
-                    <p>${message}</p>
-                `
+                react: (
+                    <EmailTemplate
+                        firstName={contactName}
+                        type="notification"
+                        message={`A new sponsorship inquiry has been received from ${companyName}.`}
+                        details={[
+                            { label: 'Company', value: companyName },
+                            { label: 'Contact Name', value: contactName },
+                            { label: 'Email', value: email },
+                            { label: 'Partnership', value: partnershipType },
+                            { label: 'Message', value: message },
+                        ]}
+                    />
+                )
             });
             console.log("Admin notification sent successfully via Resend");
 
-            // Send confirmation email to the user
+            // User Confirmation
             await resend.emails.send({
                 from: process.env.SENDER_EMAIL || 'onboarding@resend.dev',
                 to: email,
-                subject: `Thank you for your interest in AI Impact Media Studio`,
-                html: `
-                    <div style="font-family: sans-serif; color: #333;">
-                        <h1>Thank You for Reaching Out!</h1>
-                        <p>Dear ${contactName},</p>
-                        <p>We have received your sponsorship inquiry regarding <strong>${companyName}</strong>.</p>
-                        <p>Our team is reviewing your proposal for a <strong>${partnershipType}</strong> partnership and will get back to you shortly.</p>
-                        <br>
-                        <p>Best regards,</p>
-                        <p><strong>The AI Impact Media Studio Team</strong></p>
-                    </div>
-                `
+                subject: `Partnership Inquiry Received - AI Impact Media Studio`,
+                react: (
+                    <EmailTemplate
+                        firstName={contactName}
+                        type="confirmation"
+                        message={
+                            <>
+                                Thank you for your interest in partnering with AI Impact Media Studio. We have received your inquiry regarding <strong>{companyName}</strong>.
+                                <br /><br />
+                                We appreciate you reaching out to explore a <strong>{partnershipType}</strong> collaboration. Our team is currently reviewing your proposal to determine how we can best align our innovative media solutions with your strategic goals. We aim to respond to all partnership inquiries within 3-5 business days.
+                                <br /><br />
+                                In the meantime, feel free to explore our latest projects on our website to see how we are redefining the future of media.
+                            </>
+                        }
+                        details={[
+                            { label: 'Inquiry ID', value: Date.now().toString() },
+                            { label: 'Partnership Type', value: partnershipType },
+                            { label: 'Status', value: 'Under Review' }
+                        ]}
+                    />
+                )
             });
             console.log("User confirmation email sent successfully via Resend");
         } else {

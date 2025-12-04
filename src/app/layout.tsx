@@ -55,6 +55,7 @@ export const metadata: Metadata = {
 };
 
 import { ToastProvider } from "@/components/ui/Toast";
+import { MobileHomeButton } from "@/components/ui/MobileHomeButton";
 
 export default function RootLayout({
   children,
@@ -71,6 +72,7 @@ export default function RootLayout({
           <Navbar />
           {children}
           <Footer />
+          <MobileHomeButton />
         </ToastProvider>
       </body>
     </html>

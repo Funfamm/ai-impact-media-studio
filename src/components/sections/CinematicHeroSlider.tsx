@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { motion, AnimatePresence, useScroll, useTransform, Variants } from "framer-motion";
+import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 import { Magnetic } from "@/components/ui/Magnetic";
@@ -25,7 +26,7 @@ const DEMO_SLIDES: Movie[] = [
         year: "2045",
         genre: "Sci-Fi",
         featured: true,
-        sliderDuration: 8000,
+        sliderDuration: 4,
         createdAt: new Date().toISOString()
     },
     {
@@ -37,7 +38,7 @@ const DEMO_SLIDES: Movie[] = [
         year: "2102",
         genre: "Sci-Fi / Horror",
         featured: true,
-        sliderDuration: 8000,
+        sliderDuration: 4,
         createdAt: new Date().toISOString()
     },
     {
@@ -49,7 +50,7 @@ const DEMO_SLIDES: Movie[] = [
         year: "2023",
         genre: "Action",
         featured: true,
-        sliderDuration: 8000,
+        sliderDuration: 4,
         createdAt: new Date().toISOString()
     }
 ];
@@ -60,6 +61,7 @@ export function CinematicHeroSlider() {
     const [direction, setDirection] = React.useState(0);
     const [isLoading, setIsLoading] = React.useState(true);
     const [isVideoOpen, setIsVideoOpen] = React.useState(false);
+    const [currentVideoUrl, setCurrentVideoUrl] = React.useState("");
 
     // Fetch Featured Movies
     React.useEffect(() => {
@@ -108,8 +110,8 @@ export function CinematicHeroSlider() {
     React.useEffect(() => {
         if (slides.length === 0) return;
 
-        // Interpret duration as seconds (default to 8 seconds if missing)
-        const rawDuration = slides[currentIndex]?.sliderDuration || 8;
+        // Interpret duration as seconds (default to 4 seconds if missing)
+        const rawDuration = slides[currentIndex]?.sliderDuration || 4;
         const durationMs = rawDuration * 1000;
 
         const timer = setInterval(() => {
@@ -155,18 +157,18 @@ export function CinematicHeroSlider() {
         animate: {
             scale: 1.1,
             transition: {
-                duration: ((currentSlide.sliderDuration || 8) * 1.5), // Slower than the slide duration for continuous movement
+                duration: ((currentSlide.sliderDuration || 4) + 2), // Ensure zoom lasts longer than slide
                 ease: "linear"
             }
         }
     };
 
     return (
-        <section className="relative h-screen w-full overflow-hidden bg-black">
+        <section className="relative w-full aspect-[9/16] md:aspect-auto md:h-screen overflow-hidden bg-black">
             <VideoModal
                 isOpen={isVideoOpen}
                 onClose={() => setIsVideoOpen(false)}
-                videoUrl={currentSlide?.videoUrl}
+                videoUrl={currentVideoUrl}
             />
 
             <AnimatePresence mode="popLayout" initial={false} custom={direction}>
@@ -180,41 +182,47 @@ export function CinematicHeroSlider() {
                     transition={{ opacity: { duration: 1.2, ease: "easeInOut" } }}
                     className="absolute inset-0 w-full h-full"
                 >
-                    {/* Background Image/Video Container */}
-                    <div className="absolute inset-0 overflow-hidden">
+                    {/* Background Poster Container */}
+                    <div
+                        className="absolute inset-0 overflow-hidden cursor-pointer group"
+                        onClick={() => {
+                            if (currentSlide.videoUrl) {
+                                setCurrentVideoUrl(currentSlide.videoUrl);
+                                setIsVideoOpen(true);
+                            }
+                        }}
+                    >
                         <motion.div
                             variants={kenBurnsVariants}
                             initial="initial"
                             animate="animate"
                             className="w-full h-full"
                         >
-                            {currentSlide.videoUrl ? (
-                                <video
-                                    src={currentSlide.videoUrl}
-                                    className="w-full h-full object-cover"
-                                    autoPlay
-                                    muted
-                                    loop
-                                    playsInline
-                                />
-                            ) : (
-                                <NextImage
-                                    src={currentSlide.posterUrl}
-                                    alt={currentSlide.title}
-                                    fill
-                                    priority
-                                    className="object-cover"
-                                />
-                            )}
+                            <NextImage
+                                src={currentSlide.posterUrl}
+                                alt={currentSlide.title}
+                                fill
+                                priority
+                                className="object-cover group-hover:opacity-80 transition-opacity"
+                            />
                         </motion.div>
 
+                        {/* Play Icon Overlay on Hover */}
+                        {currentSlide.videoUrl && (
+                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                <div className="w-24 h-24 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                                    <Play className="h-12 w-12 text-white fill-white ml-1" />
+                                </div>
+                            </div>
+                        )}
+
                         {/* Gradient Overlays */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
-                        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/20 to-transparent" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent pointer-events-none" />
+                        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/20 to-transparent pointer-events-none" />
                     </div>
 
                     {/* Content */}
-                    <Container className="relative h-full flex items-end pb-32 z-10">
+                    <Container className="relative h-full flex items-end pb-8 md:pb-8 z-10">
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -225,13 +233,14 @@ export function CinematicHeroSlider() {
                                 <span className="inline-block px-3 py-1 mb-4 text-xs font-bold tracking-wider uppercase rounded-full bg-gradient-to-r from-primary to-purple-600 text-white">
                                     Now Streaming
                                 </span>
-                                <h1 className="text-5xl md:text-7xl font-bold text-white mb-2 tracking-tight">
+                                <h1 className="text-2xl md:text-7xl font-bold text-white mb-2 tracking-tight">
                                     {currentSlide.title}
                                 </h1>
                                 <p className="text-xl md:text-2xl text-gray-300 mb-6 font-light italic">
                                     {currentSlide.tagline}
                                 </p>
-                                <p className="text-gray-400 mb-8 leading-relaxed max-w-lg">
+
+                                <p className="hidden md:block text-gray-400 mb-8 leading-relaxed max-w-lg">
                                     {currentSlide.description}
                                 </p>
 
@@ -239,7 +248,12 @@ export function CinematicHeroSlider() {
                                     <Button
                                         size="lg"
                                         className="bg-gradient-to-r from-primary to-purple-600 hover:opacity-90 border-none text-white font-bold px-8"
-                                        onClick={() => setIsVideoOpen(true)}
+                                        onClick={() => {
+                                            if (currentSlide.videoUrl) {
+                                                setCurrentVideoUrl(currentSlide.videoUrl);
+                                                setIsVideoOpen(true);
+                                            }
+                                        }}
                                     >
                                         <Play className="mr-2 h-5 w-5 fill-current" />
                                         Watch Trailer
@@ -248,44 +262,14 @@ export function CinematicHeroSlider() {
                             </div>
                         </motion.div>
                     </Container>
-                </motion.div>
-            </AnimatePresence>
+                </motion.div >
+            </AnimatePresence >
 
-            {/* Scroll Indicator */}
-            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2">
-                <span className="text-[10px] uppercase tracking-[0.2em] text-gray-400">Scroll</span>
-                <div className="w-[1px] h-12 bg-gradient-to-b from-white/0 via-white/50 to-white/0" />
-            </div>
 
-            {/* Navigation Controls */}
-            <div className="absolute bottom-12 right-12 z-20 flex gap-4">
-                <button
-                    onClick={prevSlide}
-                    className="p-3 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md text-white transition-colors border border-white/10"
-                >
-                    <ChevronLeft className="h-6 w-6" />
-                </button>
-                <button
-                    onClick={nextSlide}
-                    className="p-3 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md text-white transition-colors border border-white/10"
-                >
-                    <ChevronRight className="h-6 w-6" />
-                </button>
-            </div>
 
-            {/* Slide Indicators */}
-            <div className="absolute bottom-12 left-1/2 -translate-x-1/2 z-20 flex gap-3">
-                {slides.map((_, index) => (
-                    <button
-                        key={index}
-                        onClick={() => {
-                            setDirection(index > currentIndex ? 1 : -1);
-                            setCurrentIndex(index);
-                        }}
-                        className={`h-1.5 rounded-full transition-all duration-300 ${index === currentIndex ? "w-8 bg-white" : "w-2 bg-white/30 hover:bg-white/50"}`}
-                    />
-                ))}
-            </div>
-        </section>
+
+
+
+        </section >
     );
 }

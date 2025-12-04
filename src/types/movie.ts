@@ -5,6 +5,7 @@ export interface Movie {
     description: string;
     posterUrl: string;
     videoUrl?: string; // Trailer URL
+    fullMovieUrl?: string; // Full movie URL
     year: string;
     genre: string;
     duration?: string; // e.g., "2h 15m"

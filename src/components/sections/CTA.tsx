@@ -48,21 +48,14 @@ const actions = [
 
 export function CTA() {
     return (
-        <section className="py-24 relative overflow-hidden">
+        <section className="absolute inset-x-0 bottom-0 md:bottom-24 h-1/5 md:h-1/6 bg-white/10 backdrop-blur-md rounded-t-2xl z-20 overflow-hidden">
             {/* Background Gradient */}
             <div className="absolute inset-0 bg-gradient-to-b from-background to-blue-900/10 pointer-events-none" />
 
             <Container className="relative z-10">
-                <div className="text-center mb-16">
-                    <h2 className="text-3xl md:text-5xl font-bold mb-6">
-                        Join the <span className="text-gradient">Revolution</span>
-                    </h2>
-                    <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-                        Whether you are a brand, a creator, or a supporter, there is a place for you at AI Impact Media Studio.
-                    </p>
-                </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 lg:gap-8">
+
+                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-6 lg:gap-8">
                     {actions.map((action, index) => (
                         <motion.div
                             key={action.title}
@@ -73,25 +66,23 @@ export function CTA() {
                             transition={{ duration: 0.5, delay: action.delay }}
                         >
                             <Link href={action.href} className="block h-full">
-                                <Card className="h-full p-4 md:p-8 flex flex-col items-center text-center hover:border-primary/50 transition-colors group relative overflow-hidden bg-white/5 backdrop-blur-sm border-white/10">
+                                <Card className="h-full p-2 md:p-8 flex flex-col items-center text-center hover:border-primary/50 transition-colors group relative overflow-hidden bg-white/5 backdrop-blur-sm border-white/10">
                                     <div className={`absolute inset-0 bg-gradient-to-br ${action.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-500`} />
 
-                                    <div className={`h-12 w-12 md:h-16 md:w-16 rounded-2xl bg-gradient-to-br ${action.gradient} p-3 md:p-4 mb-4 md:mb-6 shadow-lg transform group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300`}>
+                                    <div className={`h-8 w-8 md:h-16 md:w-16 rounded-xl md:rounded-2xl bg-gradient-to-br ${action.gradient} p-2 md:p-4 mb-2 md:mb-6 shadow-lg transform group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300`}>
                                         <action.icon className="h-full w-full text-white" />
                                     </div>
 
-                                    <h3 className="text-lg md:text-2xl font-bold mb-2 md:mb-3 text-white group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-gray-400 transition-all">
+
+
+                                    <h3 className="text-sm md:text-2xl font-bold mb-1 md:mb-3 text-white group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-gray-400 transition-all">
                                         {action.title}
                                     </h3>
-                                    <p className="text-xs md:text-base text-gray-400 mb-4 md:mb-8 flex-grow leading-relaxed group-hover:text-gray-300 transition-colors line-clamp-3 md:line-clamp-none">
+                                    <p className="hidden md:block text-xs md:text-base text-gray-400 mb-4 md:mb-8 flex-grow leading-relaxed group-hover:text-gray-300 transition-colors line-clamp-3 md:line-clamp-none">
                                         {action.description}
                                     </p>
 
-                                    <div className="w-full">
-                                        <div className="inline-flex items-center justify-center rounded-lg font-medium transition-all duration-300 px-4 py-2 md:px-6 md:py-3 text-sm md:text-base w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white group-hover:border-white/20 group-hover:shadow-[0_0_20px_rgba(255,255,255,0.1)]">
-                                            {action.buttonText}
-                                        </div>
-                                    </div>
+
                                 </Card>
                             </Link>
                         </motion.div>

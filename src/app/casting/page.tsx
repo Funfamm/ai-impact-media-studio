@@ -7,7 +7,7 @@ export default function CastingPage() {
     return (
         <main className="min-h-screen flex flex-col lg:flex-row relative bg-black">
             {/* Right Side (Showcase) - Fixed on Desktop */}
-            <div className="w-full lg:w-[55%] h-[65vh] lg:h-screen lg:fixed lg:right-0 lg:top-0 order-1 lg:order-2 z-0">
+            <div className="w-full lg:w-[55%] h-[40vh] lg:h-screen lg:fixed lg:right-0 lg:top-0 order-1 lg:order-2 z-0">
                 <CastingShowcase />
                 {/* Gradient Overlay for seamless blend - Desktop only side blend */}
                 <div className="absolute inset-0 bg-gradient-to-r from-black via-transparent to-transparent z-20 pointer-events-none hidden lg:block" />

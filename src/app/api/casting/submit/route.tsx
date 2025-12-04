@@ -84,53 +84,64 @@ export async function POST(request: Request) {
         // Send email using Resend
         if (process.env.RESEND_API_KEY) {
             const { Resend } = await import('resend');
+            const { EmailTemplate } = await import('@/components/email/EmailTemplate');
             const resend = new Resend(process.env.RESEND_API_KEY);
 
             // Assuming headshots and voiceSamples are File objects or similar
             const headshotFileNames = headshots.map(file => (file as File).name).join(', ');
             const voiceSampleFileNames = voiceSamples.map(file => (file as File).name).join(', ');
 
+            // Admin Notification
             await resend.emails.send({
                 from: process.env.SENDER_EMAIL || 'onboarding@resend.dev',
                 to: process.env.CONTACT_EMAIL || 'impact-media@impactaistudio.com',
                 subject: `New Casting Submission: ${firstName} ${lastName}`,
-                html: `
-                    <h1>New Casting Submission</h1>
-                    <p><strong>Name:</strong> ${firstName} ${lastName}</p>
-                    <p><strong>Email:</strong> ${email}</p>
-                    <p><strong>Phone:</strong> ${phone}</p>
-                    <p><strong>Gender:</strong> ${gender}</p>
-                    <p><strong>Social:</strong> ${socialType} - ${socialHandle}</p>
-                    <p><strong>Files:</strong></p>
-                    <ul>
-                        <li>Headshots: ${headshotFileNames}</li>
-                        <li>Voice Samples: ${voiceSampleFileNames}</li>
-                    </ul>
-                `
+                react: (
+                    <EmailTemplate
+                        firstName={`${firstName} ${lastName}`}
+                        type="notification"
+                        message={`A new casting application has been received from ${firstName} ${lastName}.`}
+                        details={[
+                            { label: 'Name', value: `${firstName} ${lastName}` },
+                            { label: 'Email', value: email as string },
+                            { label: 'Phone', value: phone as string },
+                            { label: 'Gender', value: gender as string },
+                            { label: 'Social', value: `${socialType} - ${socialHandle}` },
+                            { label: 'Headshots', value: headshotFileNames },
+                            { label: 'Voice Samples', value: voiceSampleFileNames },
+                        ]}
+                    />
+                )
             });
             console.log("Admin notification sent successfully via Resend");
 
-            // Send confirmation email to the applicant
+            // User Confirmation
             await resend.emails.send({
                 from: process.env.SENDER_EMAIL || 'onboarding@resend.dev',
                 to: email as string,
                 subject: `Application Received - AI Impact Media Studio`,
-                html: `
-                    <div style="font-family: sans-serif; color: #333;">
-                        <h1>Application Received</h1>
-                        <p>Dear ${firstName},</p>
-                        <p>Thank you for submitting your casting application to AI Impact Media Studio.</p>
-                        <p>We have successfully received your details and media assets. Our casting directors will review your submission.</p>
-                        <p>If your profile matches our upcoming production needs, we will contact you directly.</p>
-                        <br>
-                        <p style="font-size: 0.9em; color: #666; font-style: italic;">
-                            Please note: As outlined in the application, the contribution of your likeness and voice for our projects is a voluntary collaboration focused on professional exposure and portfolio development, and does not include financial compensation. We truly appreciate your willingness to be part of our creative vision.
-                        </p>
-                        <br>
-                        <p>Best regards,</p>
-                        <p><strong>The AI Impact Media Studio Team</strong></p>
-                    </div>
-                `
+                react: (
+                    <EmailTemplate
+                        firstName={firstName as string}
+                        type="confirmation"
+                        message={
+                            <>
+                                Thank you for submitting your casting application to AI Impact Media Studio. We have successfully received your details and media assets.
+                                <br /><br />
+                                Our casting directors are currently reviewing your submission. If your profile aligns with the creative vision of our upcoming productions, we will reach out to you directly to discuss next steps.
+                                <br /><br />
+                                <strong>Important Note regarding your application:</strong>
+                                <br />
+                                Please be reminded that participation in our projects is a voluntary collaboration. As outlined in our casting terms, there is no financial compensation provided for this role. This opportunity is designed for professional exposure, portfolio development, and the unique experience of collaborating on cutting-edge AI-driven media productions. We truly appreciate your passion and willingness to contribute your talent to our vision.
+                            </>
+                        }
+                        details={[
+                            { label: 'Application ID', value: Date.now().toString() },
+                            { label: 'Role Interest', value: 'Casting / Voice Acting' },
+                            { label: 'Status', value: 'Under Review' }
+                        ]}
+                    />
+                )
             });
             console.log("Applicant confirmation email sent successfully via Resend");
         } else {
