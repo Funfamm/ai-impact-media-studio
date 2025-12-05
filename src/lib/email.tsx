@@ -23,7 +23,6 @@ async function sendEmail(params: {
             const data = await resend.emails.send({
                 from: process.env.SENDER_EMAIL || 'onboarding@resend.dev',
                 to,
-                replyTo: process.env.CONTACT_EMAIL || 'impact-media@impactaistudio.com',
                 subject,
                 react: (
                     <EmailTemplate

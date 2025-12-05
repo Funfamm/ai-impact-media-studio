@@ -101,7 +101,7 @@ export const EmailTemplate: React.FC<Readonly<EmailTemplateProps>> = ({
                         </Text>
                         <div style={{ marginTop: '10px' }}>
                             <Link href="https://ai-impact-media-studio.com" style={linkStyle}>Website</Link>
-                            <Link href="#" style={linkStyle}>Privacy Policy</Link>
+                            <Link href="https://ai-impact-media-studio.com/privacy" style={linkStyle}>Privacy Policy</Link>
                         </div>
                     </Section>
                 </Container>

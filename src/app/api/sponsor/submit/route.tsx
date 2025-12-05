@@ -6,7 +6,14 @@ import { sendAdminNotification, sendUserConfirmation } from '@/lib/email';
 export async function POST(request: Request) {
     try {
         const data = await request.json();
-        const { companyName, contactName, email, partnershipType, message } = data;
+        const { companyName, contactName, email, partnershipType, message, _honey } = data;
+
+        // Spam prevention: Honeypot check
+        // If _honey is present (filled by a bot), we silently reject it but return success to fool the bot.
+        if (_honey) {
+            console.warn(`Spam detection: Honeypot filled by ${email}`);
+            return NextResponse.json({ success: true });
+        }
 
         // Basic validation
         if (!companyName || !contactName || !email || !partnershipType || !message) {
@@ -40,7 +47,7 @@ export async function POST(request: Request) {
         // Send email using shared helper
         if (process.env.RESEND_API_KEY) {
             // Admin Notification
-            await sendAdminNotification({
+            const adminResult = await sendAdminNotification({
                 to: process.env.CONTACT_EMAIL || 'impact-media@impactaistudio.com',
                 subject: `New Sponsorship Inquiry from ${companyName}`,
                 firstName: contactName,
@@ -54,8 +61,12 @@ export async function POST(request: Request) {
                 ],
             });
 
+            if (adminResult.error) {
+                console.error("Failed to send admin notification:", adminResult.error);
+            }
+
             // User Confirmation
-            await sendUserConfirmation({
+            const userResult = await sendUserConfirmation({
                 to: email,
                 subject: `Partnership Inquiry Received - AI Impact Media Studio`,
                 firstName: contactName,
@@ -74,6 +85,11 @@ export async function POST(request: Request) {
                     { label: 'Status', value: 'Under Review' }
                 ],
             });
+
+            if (userResult.error) {
+                console.error("Failed to send user confirmation:", userResult.error);
+                // We might want to return a warning here, but for now we'll just log it so the UI doesn't break if email service is down.
+            }
         } else {
             console.warn("RESEND_API_KEY not found. Email sending skipped (simulated).");
             console.log("--- SIMULATED EMAIL ---");

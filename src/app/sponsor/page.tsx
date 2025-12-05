@@ -32,6 +32,7 @@ export default function SponsorPage() {
             email: (form.elements.namedItem('email') as HTMLInputElement).value,
             partnershipType: (form.elements.namedItem('partnershipType') as HTMLSelectElement).value,
             message: (form.elements.namedItem('message') as HTMLTextAreaElement).value,
+            _honey: (form.elements.namedItem('_honey') as HTMLInputElement).value,
         };
 
         try {
@@ -131,6 +132,9 @@ export default function SponsorPage() {
                     >
                         <Card className="p-6 md:p-8 bg-surface/50 border-primary/20">
                             <form className="space-y-6" onSubmit={handleSubmit}>
+                                {/* Honeypot for spam protection */}
+                                <input type="text" name="_honey" className="hidden" tabIndex={-1} autoComplete="off" />
+
                                 <div className="space-y-2">
                                     <Label htmlFor="companyName">Company Name</Label>
                                     <Input id="companyName" name="companyName" placeholder="Tech Corp Inc." className="h-12" required />
