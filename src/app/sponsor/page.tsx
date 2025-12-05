@@ -24,6 +24,8 @@ export default function SponsorPage() {
             return;
         }
 
+
+
         setIsSubmitting(true);
 
         const formData = {
@@ -131,7 +133,7 @@ export default function SponsorPage() {
                         className="order-1 lg:order-2"
                     >
                         <Card className="p-6 md:p-8 bg-surface/50 border-primary/20">
-                            <form className="space-y-6" onSubmit={handleSubmit}>
+                            <form className="space-y-6" onSubmit={handleSubmit} noValidate>
                                 {/* Honeypot for spam protection */}
                                 <input type="text" name="_honey" className="hidden" tabIndex={-1} autoComplete="off" />
 

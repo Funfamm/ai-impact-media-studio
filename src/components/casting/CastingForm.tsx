@@ -19,6 +19,12 @@ export function CastingForm() {
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        const form = e.currentTarget;
+
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
 
         if (headshots.length === 0) {
             showToast("Please upload at least one professional headshot.", "error");
@@ -40,7 +46,6 @@ export function CastingForm() {
             return;
         }
 
-        const form = e.currentTarget;
         setIsSubmitting(true);
 
         try {
@@ -99,7 +104,7 @@ export function CastingForm() {
                 </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-12">
+            <form onSubmit={handleSubmit} className="space-y-12" noValidate>
                 {/* Section 1: Personal Details */}
                 <div className="space-y-6">
                     <div className="flex items-center gap-4 mb-6">
