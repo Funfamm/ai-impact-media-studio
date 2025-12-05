@@ -277,6 +277,7 @@ export function CastingForm() {
 
                 <div className="pt-8">
                     <Button
+                        type="submit"
                         size="lg"
                         disabled={isSubmitting}
                         className="w-full h-16 text-lg font-bold bg-gradient-to-r from-primary to-violet-600 hover:from-primary/90 hover:to-violet-600/90 shadow-xl shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"

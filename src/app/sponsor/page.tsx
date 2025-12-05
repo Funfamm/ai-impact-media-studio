@@ -182,7 +182,7 @@ export default function SponsorPage() {
                                     />
                                 </div>
 
-                                <Button disabled={isSubmitting} className="w-full h-12 text-base font-bold bg-gradient-to-r from-primary to-violet-600 hover:from-primary/90 hover:to-violet-600/90 shadow-lg shadow-primary/20">
+                                <Button type="submit" disabled={isSubmitting} className="w-full h-12 text-base font-bold bg-gradient-to-r from-primary to-violet-600 hover:from-primary/90 hover:to-violet-600/90 shadow-lg shadow-primary/20">
                                     {isSubmitting ? "Sending..." : "Submit Inquiry"}
                                 </Button>
                             </form>
