@@ -85,13 +85,7 @@ export const EmailTemplate: React.FC<Readonly<EmailTemplateProps>> = ({
                             </Section>
                         )}
 
-                        {isConfirmation && (
-                            <Section style={footerNoteStyle}>
-                                <Text style={footerNoteTextStyle}>
-                                    Please note: This is an automated response. If your inquiry requires immediate attention, please contact us directly through our support channels.
-                                </Text>
-                            </Section>
-                        )}
+
                     </Section>
 
                     {/* Footer */}
@@ -192,18 +186,7 @@ const valueStyle = {
     fontWeight: '500',
 };
 
-const footerNoteStyle = {
-    marginTop: '30px',
-    paddingTop: '20px',
-    borderTop: '1px solid #374151',
-};
 
-const footerNoteTextStyle = {
-    fontSize: '14px',
-    color: '#9ca3af',
-    fontStyle: 'italic',
-    margin: 0,
-};
 
 const footerStyle = {
     backgroundColor: '#111827',
