@@ -72,7 +72,7 @@ export async function POST(request: Request) {
                 firstName: contactName,
                 message: (
                     <>
-                        Thank you for your interest in partnering with AI Impact Media Studio. We have received your inquiry regarding <strong>{companyName}</strong>.
+                        Thank you for your interest in partnering with AI Impact Media Studio.
                         <br /><br />
                         We appreciate you reaching out to explore a <strong>{partnershipType}</strong> collaboration. Our team is currently reviewing your proposal to determine how we can best align our innovative media solutions with your strategic goals. We aim to respond to all partnership inquiries within 3-5 business days.
                         <br /><br />

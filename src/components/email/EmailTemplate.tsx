@@ -108,7 +108,7 @@ export const EmailTemplate: React.FC<Readonly<EmailTemplateProps>> = ({
 const mainStyle = {
     fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif',
     backgroundColor: '#f3f4f6',
-    padding: '40px 20px',
+    padding: '20px 10px',
 };
 
 const containerStyle = {
@@ -136,7 +136,7 @@ const logoStyle = {
 };
 
 const contentStyle = {
-    padding: '40px',
+    padding: '24px',
     color: '#e5e7eb',
 };
 
@@ -175,7 +175,7 @@ const labelStyle = {
     padding: '8px 0',
     color: '#9ca3af',
     fontSize: '14px',
-    width: '140px',
+    width: '110px',
     verticalAlign: 'top' as const,
 };
 
