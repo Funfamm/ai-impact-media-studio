@@ -10,6 +10,7 @@ import {
     Link,
     Preview,
     Hr,
+    Button,
 } from '@react-email/components';
 
 interface EmailTemplateProps {
@@ -99,8 +100,12 @@ export const EmailTemplate: React.FC<Readonly<EmailTemplateProps>> = ({
                         <Text style={footerTextStyle}>
                             © {new Date().getFullYear()} AI Impact Media Studio. All rights reserved.
                         </Text>
+                        <div style={{ marginTop: '20px', marginBottom: '20px' }}>
+                            <Button href="https://ai-impact-media-studio.com" style={buttonStyle}>
+                                Visit Website
+                            </Button>
+                        </div>
                         <div style={{ marginTop: '10px' }}>
-                            <Link href="https://ai-impact-media-studio.com" style={linkStyle}>Website</Link>
                             <Link href="https://ai-impact-media-studio.com/privacy" style={linkStyle}>Privacy Policy</Link>
                         </div>
                     </Section>
@@ -223,4 +228,18 @@ const linkStyle = {
     textDecoration: 'none',
     fontSize: '12px',
     margin: '0 10px',
+};
+
+const buttonStyle = {
+    backgroundColor: '#9333ea',
+    borderRadius: '5px',
+    color: '#fff',
+    fontSize: '16px',
+    fontWeight: 'bold',
+    textDecoration: 'none',
+    textAlign: 'center' as const,
+    display: 'block',
+    width: '100%',
+    padding: '10px',
+    marginBottom: '10px',
 };
