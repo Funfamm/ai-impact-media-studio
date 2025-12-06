@@ -40,7 +40,7 @@ async function sendEmail(params: {
             text: `Hello ${firstName},\n\n${typeof message === 'string' ? message : 'Please view this email in a modern email client to see the full content.'}\n\n${details.map(d => `${d.label}: ${d.value}`).join('\n')}`,
         });
         console.log(`Email sent to ${to}. ID: ${data.data?.id}, Error: ${data.error}`);
-        return { success: !data.error, data: data.data, error: data.error };
+        return { success: !data.error, data: data.data, error: data.error ? data.error.message : null };
     } catch (error) {
         console.error(`Failed to send email to ${to}:`, error);
         return { success: false, error: error instanceof Error ? error.message : String(error), data: null };
