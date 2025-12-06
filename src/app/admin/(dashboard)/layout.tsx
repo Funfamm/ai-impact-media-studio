@@ -9,7 +9,7 @@ export default function AdminLayout({
     return (
         <div className="min-h-screen bg-[#0a0a0a]">
             <AdminSidebar />
-            <AdminHeader />
+            <AdminHeader email={process.env.CONTACT_EMAIL} />
             <main className="ml-64 p-8">
                 {children}
             </main>
