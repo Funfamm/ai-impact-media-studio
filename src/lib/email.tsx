@@ -30,6 +30,7 @@ async function sendEmail(params: {
     }
     try {
         const resend = new Resend(process.env.RESEND_API_KEY);
+        console.log("Sending to:", to);
         const data = await resend.emails.send({
             from: process.env.SENDER_EMAIL || 'onboarding@resend.dev',
             to,
@@ -39,6 +40,7 @@ async function sendEmail(params: {
             ),
             text: `Hello ${firstName},\n\n${typeof message === 'string' ? message : 'Please view this email in a modern email client to see the full content.'}\n\n${details.map(d => `${d.label}: ${d.value}`).join('\n')}`,
         });
+        console.log("Resend response:", data);
         console.log(`Email sent to ${to}. ID: ${data.data?.id}, Error: ${data.error}`);
         return { success: !data.error, data: data.data, error: data.error ? data.error.message : null };
     } catch (error) {
