@@ -4,7 +4,6 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { NextResponse } from "next/server";
 import { sendAdminNotification, sendUserConfirmation } from '@/lib/email';
 
-
 export async function POST(request: Request) {
     try {
         const formData = await request.formData();
@@ -25,24 +24,13 @@ export async function POST(request: Request) {
 
         // Basic validation
         if (!firstName || !lastName || !email || !gender || !signature) {
-            return NextResponse.json(
-                { error: "Missing required fields" },
-                { status: 400 }
-            );
+            return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
         }
-
         if (headshots.length === 0) {
-            return NextResponse.json(
-                { error: "At least one headshot is required" },
-                { status: 400 }
-            );
+            return NextResponse.json({ error: "At least one headshot is required" }, { status: 400 });
         }
-
         if (voiceSamples.length === 0) {
-            return NextResponse.json(
-                { error: "Voice sample is required" },
-                { status: 400 }
-            );
+            return NextResponse.json({ error: "Voice sample is required" }, { status: 400 });
         }
 
         // Upload files to Firebase Storage
@@ -81,16 +69,15 @@ export async function POST(request: Request) {
             aiEvaluation: null, // Placeholder for future AI evaluation
             createdAt: serverTimestamp(),
         });
-        console.log("Casting application saved to Firestore");
 
-        // Prepare file names for email
-        const headshotFileNames = headshots.map(file => (file as File).name).join(', ');
-        const voiceSampleFileNames = voiceSamples.map(file => (file as File).name).join(', ');
+        // Prepare file name strings for email details
+        const headshotFileNames = headshots.map((file) => (file as File).name).join(', ');
+        const voiceSampleFileNames = voiceSamples.map((file) => (file as File).name).join(', ');
 
-        // Send email using shared helper
+        // Email handling
         if (process.env.RESEND_API_KEY) {
             // Admin Notification
-            await sendAdminNotification({
+            const adminResult = await sendAdminNotification({
                 to: process.env.CONTACT_EMAIL || 'impact-media@impactaistudio.com',
                 subject: `New Casting Submission: ${firstName} ${lastName}`,
                 firstName: `${firstName} ${lastName}`,
@@ -105,9 +92,12 @@ export async function POST(request: Request) {
                     { label: 'Voice Samples', value: voiceSampleFileNames },
                 ],
             });
+            if (!adminResult.success) {
+                console.error('Admin notification email failed:', adminResult.error);
+            }
 
             // User Confirmation
-            await sendUserConfirmation({
+            const userResult = await sendUserConfirmation({
                 to: email as string,
                 subject: `Application Received - AI Impact Media Studio`,
                 firstName: firstName as string,
@@ -119,7 +109,7 @@ export async function POST(request: Request) {
                         <br /><br />
                         <strong>Important Note regarding your application:</strong>
                         <br />
-                        Please be reminded that participation in our projects is a voluntary collaboration. As outlined in our casting terms, there is no financial compensation provided for this role. This opportunity is designed for professional exposure, portfolio development, and the unique experience of collaborating on cutting‑edge AI‑driven media productions. We truly appreciate your passion and willingness to contribute your talent to our vision.
+                        Please be reminded that participation is voluntary and no financial compensation is provided.
                     </>
                 ),
                 details: [
@@ -128,21 +118,20 @@ export async function POST(request: Request) {
                     { label: 'Status', value: 'Under Review' },
                 ],
             });
+            if (!userResult.success) {
+                console.error('User confirmation email failed:', userResult.error);
+            }
         } else {
             console.warn('RESEND_API_KEY not found. Email sending skipped (simulated).');
             console.log('--- SIMULATED EMAIL ---');
             console.log(`To: ${process.env.CONTACT_EMAIL || 'impact-media@impactaistudio.com'}`);
             console.log(`Subject: New Casting Submission: ${firstName} ${lastName}`);
-            console.log('-----------------------');
+            console.log('--- END SIMULATED EMAIL ---');
         }
-
 
         return NextResponse.json({ success: true });
     } catch (error) {
         console.error("Error processing casting application:", error);
-        return NextResponse.json(
-            { error: "Internal server error" },
-            { status: 500 }
-        );
+        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 }

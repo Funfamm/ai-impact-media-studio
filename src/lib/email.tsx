@@ -6,7 +6,8 @@ import { EmailTemplate } from '@/components/email/EmailTemplate';
 import React from 'react';
 
 /**
- * Sends an email using Resend. If RESEND_API_KEY is not set, logs a simulated email.
+ * Sends an email using Resend. Returns a structured result.
+ * If RESEND_API_KEY is not set, logs a simulated email and returns a success result.
  */
 async function sendEmail(params: {
     to: string;
@@ -15,39 +16,34 @@ async function sendEmail(params: {
     type: 'notification' | 'confirmation';
     message: React.ReactNode;
     details: { label: string; value: string }[];
-}) {
+}): Promise<{ success: boolean; data?: any; error?: string | null }> {
     const { to, subject, firstName, type, message, details } = params;
-    if (process.env.RESEND_API_KEY) {
-        try {
-            const resend = new Resend(process.env.RESEND_API_KEY);
-            const data = await resend.emails.send({
-                from: process.env.SENDER_EMAIL || 'onboarding@resend.dev',
-                to,
-                subject,
-                react: (
-                    <EmailTemplate
-                        firstName={firstName}
-                        type={type}
-                        message={message}
-                        details={details}
-                    />
-                ),
-                text: `Hello ${firstName},\n\n${typeof message === 'string' ? message : 'Please view this email in a modern email client to see the full content.'}\n\n${details.map(d => `${d.label}: ${d.value}`).join('\n')}`,
-            });
-            console.log(`Email sent to ${to}. ID: ${data.data?.id}, Error: ${data.error}`);
-            return data;
-        } catch (error) {
-            console.error(`Failed to send email to ${to}:`, error);
-            return { error: error instanceof Error ? error.message : String(error), data: null };
-        }
-    } else {
-        console.warn('RESEND_API_KEY not found. Email sending skipped (simulated).');
+    // Validate environment variables
+    if (!process.env.RESEND_API_KEY) {
+        console.warn('RESEND_API_KEY not set. Email sending simulated.');
         console.log('--- SIMULATED EMAIL ---');
         console.log(`To: ${to}`);
         console.log(`Subject: ${subject}`);
         console.log('Content: (rendered by EmailTemplate)');
         console.log('-----------------------');
-        return { data: { id: 'simulated' }, error: null };
+        return { success: true, data: { id: 'simulated' }, error: null };
+    }
+    try {
+        const resend = new Resend(process.env.RESEND_API_KEY);
+        const data = await resend.emails.send({
+            from: process.env.SENDER_EMAIL || 'onboarding@resend.dev',
+            to,
+            subject,
+            react: (
+                <EmailTemplate firstName={firstName} type={type} message={message} details={details} />
+            ),
+            text: `Hello ${firstName},\n\n${typeof message === 'string' ? message : 'Please view this email in a modern email client to see the full content.'}\n\n${details.map(d => `${d.label}: ${d.value}`).join('\n')}`,
+        });
+        console.log(`Email sent to ${to}. ID: ${data.data?.id}, Error: ${data.error}`);
+        return { success: !data.error, data: data.data, error: data.error };
+    } catch (error) {
+        console.error(`Failed to send email to ${to}:`, error);
+        return { success: false, error: error instanceof Error ? error.message : String(error), data: null };
     }
 }
 

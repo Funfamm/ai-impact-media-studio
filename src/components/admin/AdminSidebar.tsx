@@ -1,9 +1,11 @@
+// src/components/admin/AdminSidebar.tsx
 "use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LayoutDashboard, Film, Users, Settings, LogOut, Handshake } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { signOut } from "next-auth/react";
 
 const sidebarLinks = [
     { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
@@ -49,7 +51,10 @@ export function AdminSidebar() {
             </nav>
 
             <div className="p-4 border-t border-white/10">
-                <button className="flex items-center gap-3 px-4 py-3 w-full rounded-lg text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors text-sm font-medium">
+                <button
+                    onClick={() => signOut({ callbackUrl: "/" })}
+                    className="flex items-center gap-3 px-4 py-3 w-full rounded-lg text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors text-sm font-medium"
+                >
                     <LogOut className="h-5 w-5" />
                     Sign Out
                 </button>

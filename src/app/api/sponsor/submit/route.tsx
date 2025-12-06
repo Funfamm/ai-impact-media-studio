@@ -45,6 +45,7 @@ export async function POST(request: Request) {
         }
 
         // Send email using shared helper
+        // Email handling
         if (process.env.RESEND_API_KEY) {
             // Admin Notification
             const adminResult = await sendAdminNotification({
@@ -60,9 +61,8 @@ export async function POST(request: Request) {
                     { label: 'Message', value: message },
                 ],
             });
-
-            if (adminResult.error) {
-                console.error("Failed to send admin notification:", adminResult.error);
+            if (!adminResult.success) {
+                console.error('Failed to send admin notification:', adminResult.error);
             }
 
             // User Confirmation
@@ -82,21 +82,19 @@ export async function POST(request: Request) {
                 details: [
                     { label: 'Inquiry ID', value: Date.now().toString() },
                     { label: 'Partnership Type', value: partnershipType },
-                    { label: 'Status', value: 'Under Review' }
+                    { label: 'Status', value: 'Under Review' },
                 ],
             });
-
-            if (userResult.error) {
-                console.error("Failed to send user confirmation:", userResult.error);
-                // We might want to return a warning here, but for now we'll just log it so the UI doesn't break if email service is down.
+            if (!userResult.success) {
+                console.error('Failed to send user confirmation:', userResult.error);
             }
         } else {
-            console.warn("RESEND_API_KEY not found. Email sending skipped (simulated).");
-            console.log("--- SIMULATED EMAIL ---");
+            console.warn('RESEND_API_KEY not found. Email sending skipped (simulated).');
+            console.log('--- SIMULATED EMAIL ---');
             console.log(`To: ${process.env.CONTACT_EMAIL || 'impact-media@impactaistudio.com'}`);
             console.log(`Subject: New Sponsorship Inquiry from ${companyName}`);
             console.log(`Content: ${message}`);
-            console.log("-----------------------");
+            console.log('--- END SIMULATED EMAIL ---');
         }
 
         return NextResponse.json({ success: true });
